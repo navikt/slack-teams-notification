@@ -7,7 +7,7 @@ jobs:
       id-token: "write"
     runs-on: ubuntu-22.04
     outputs:
-      "version": ${{ steps.build_push_sign.outputs.version }}
+      version: ${{ steps.build_push_sign.outputs.version }}
     env:
       BUILDER_IMG: "cgr.dev/chainguard/go:1.20"
       RUNNER_IMG: "cgr.dev/chainguard/static"
