@@ -22,7 +22,7 @@ type Option func(*Notifier)
 // NewNotifier Create a new Slack notifier instance
 func NewNotifier(slackApiToken, teamsFrontendURL string, options ...Option) *Notifier {
 	notifier := &Notifier{
-		logger:           logrus.New().WithField("component", "notifier"),
+		logger:           logrus.New().WithField("component", "slack-notifier"),
 		teamsFrontendURL: teamsFrontendURL,
 		slackAPI:         slackapi.New(slackApiToken),
 		sleepDuration:    time.Second * 1, // Slack has rather strict rate limits, sleep duration between notifications
@@ -72,18 +72,14 @@ func (n *Notifier) NotifyTeams(ctx context.Context, teams []teams.Team, ownerEma
 func (n *Notifier) notifyTeam(ctx context.Context, team teams.Team, ownerEmailsFilter []string) error {
 	logger := n.logger.WithField("team_slug", team.Slug)
 
-	owners := teamOwners(team)
+	owners := teamOwners(team, ownerEmailsFilter)
 	if len(owners) == 0 {
-		logger.Infof("team does not have any owners, unable to notify")
+		logger.Warnf("team does not have any owners, unable to notify")
 		return nil
 	}
 
 	for _, owner := range owners {
 		email := owner.Email
-
-		if !ownerShouldReceiveNotification(email, ownerEmailsFilter) {
-			continue
-		}
 
 		logger = logger.WithField("user_email", email)
 
@@ -104,6 +100,7 @@ func (n *Notifier) notifyTeam(ctx context.Context, team teams.Team, ownerEmailsF
 			continue
 		}
 
+		logger.Infof("owner notified")
 		time.Sleep(n.sleepDuration)
 	}
 
@@ -118,10 +115,10 @@ func (n *Notifier) notifyOwner(ctx context.Context, team teams.Team, owner teams
 }
 
 // teamOwners return a list of team owners for a team
-func teamOwners(team teams.Team) []teams.User {
+func teamOwners(team teams.Team, ownerEmailsFilter []string) []teams.User {
 	owners := make([]teams.User, 0)
 	for _, member := range team.Members {
-		if member.IsOwner() {
+		if member.IsOwner() && ownerShouldReceiveNotification(member.User.Email, ownerEmailsFilter) {
 			owners = append(owners, member.User)
 		}
 	}

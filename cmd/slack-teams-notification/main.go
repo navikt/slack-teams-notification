@@ -34,8 +34,9 @@ func run() error {
 		return err
 	}
 
-	teamsClient := teams.NewClient(cfg.Teams.BackendURL, cfg.Teams.APIToken)
-	naisTeams, err := teamsClient.GetTeams(ctx, cfg.TeamsFilter)
+	naisTeams, err := teams.
+		NewClient(cfg.Teams.BackendURL, cfg.Teams.APIToken).
+		GetTeams(ctx, cfg.TeamsFilter)
 	if err != nil {
 		return err
 	}
@@ -45,8 +46,9 @@ func run() error {
 		return nil
 	}
 
-	slackNotifier := slack.NewNotifier(cfg.Slack.APIToken, cfg.Teams.FrontendURL)
-	err = slackNotifier.NotifyTeams(ctx, naisTeams, cfg.OwnersFilter)
+	err = slack.
+		NewNotifier(cfg.Slack.APIToken, cfg.Teams.FrontendURL).
+		NotifyTeams(ctx, naisTeams, cfg.OwnersFilter)
 	if err != nil {
 		return err
 	}
