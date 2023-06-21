@@ -2,6 +2,7 @@ package slack
 
 import (
 	"context"
+	"strings"
 	"time"
 
 	"github.com/nais/slack-teams-notification/pkg/teams"
@@ -12,21 +13,54 @@ import (
 type Notifier struct {
 	teamsFrontendURL string
 	slackAPI         *slackapi.Client
+	logger           *logrus.Entry
+	sleepDuration    time.Duration
 }
 
+type Option func(*Notifier)
+
 // NewNotifier Create a new Slack notifier instance
-func NewNotifier(teamsFrontendURL, slackAPIToken string) Notifier {
-	return Notifier{
+func NewNotifier(slackApiToken, teamsFrontendURL string, options ...Option) *Notifier {
+	notifier := &Notifier{
+		logger:           logrus.New().WithField("component", "notifier"),
 		teamsFrontendURL: teamsFrontendURL,
-		slackAPI:         slackapi.New(slackAPIToken),
+		slackAPI:         slackapi.New(slackApiToken),
+		sleepDuration:    time.Second * 1, // Slack has rather strict rate limits, sleep duration between notifications
+	}
+
+	for _, opt := range options {
+		opt(notifier)
+	}
+
+	return notifier
+}
+
+// OptionSleepDuration Set a custom sleep duration
+func OptionSleepDuration(d time.Duration) func(*Notifier) {
+	return func(n *Notifier) {
+		n.sleepDuration = d
+	}
+}
+
+// OptionLogger Set a custom logger
+func OptionLogger(logger *logrus.Entry) func(*Notifier) {
+	return func(n *Notifier) {
+		n.logger = logger
+	}
+}
+
+// OptionSlackApi Set a custom Slack API client
+func OptionSlackApi(client *slackapi.Client) func(*Notifier) {
+	return func(n *Notifier) {
+		n.slackAPI = client
 	}
 }
 
 // NotifyTeams Notify all team owners on Slack that they need to keep their teams up to date with regards to
 // owners/members
-func (s Notifier) NotifyTeams(ctx context.Context, teams []teams.Team) error {
+func (n *Notifier) NotifyTeams(ctx context.Context, teams []teams.Team, ownerEmailsFilter []string) error {
 	for _, team := range teams {
-		err := s.notifyTeam(ctx, team)
+		err := n.notifyTeam(ctx, team, ownerEmailsFilter)
 		if err != nil {
 			return err
 		}
@@ -35,8 +69,8 @@ func (s Notifier) NotifyTeams(ctx context.Context, teams []teams.Team) error {
 }
 
 // notifyTeam Send notifications about a team to the owners of the team
-func (s Notifier) notifyTeam(ctx context.Context, team teams.Team) error {
-	logger := logrus.WithField("team_slug", team.Slug)
+func (n *Notifier) notifyTeam(ctx context.Context, team teams.Team, ownerEmailsFilter []string) error {
+	logger := n.logger.WithField("team_slug", team.Slug)
 
 	owners := teamOwners(team)
 	if len(owners) == 0 {
@@ -46,9 +80,14 @@ func (s Notifier) notifyTeam(ctx context.Context, team teams.Team) error {
 
 	for _, owner := range owners {
 		email := owner.Email
+
+		if !ownerShouldReceiveNotification(email, ownerEmailsFilter) {
+			continue
+		}
+
 		logger = logger.WithField("user_email", email)
 
-		slackUser, err := s.slackAPI.GetUserByEmailContext(ctx, email)
+		slackUser, err := n.slackAPI.GetUserByEmailContext(ctx, email)
 		if err != nil {
 			logger.WithError(err).Errorf("unable to lookup Slack user")
 			continue
@@ -59,23 +98,22 @@ func (s Notifier) notifyTeam(ctx context.Context, team teams.Team) error {
 			"user_slack_name": slackUser.RealName,
 		})
 
-		err = s.notifyOwner(ctx, team, owner, slackUser.ID)
+		err = n.notifyOwner(ctx, team, owner, slackUser.ID)
 		if err != nil {
 			logger.WithError(err).Errorf("unable to notify Slack user")
 			continue
 		}
 
-		// Slack has rather strict rate limits, so we'll sleep after each message
-		time.Sleep(time.Second * 1)
+		time.Sleep(n.sleepDuration)
 	}
 
 	return nil
 }
 
 // notifyOwner Send a notification to a specific owner regarding a team
-func (s Notifier) notifyOwner(ctx context.Context, team teams.Team, owner teams.User, slackUserID string) error {
-	msgOptions := getNotificationMessageOptions(team, owner.Name, s.teamsFrontendURL)
-	_, _, err := s.slackAPI.PostMessageContext(ctx, slackUserID, msgOptions...)
+func (n *Notifier) notifyOwner(ctx context.Context, team teams.Team, owner teams.User, slackUserID string) error {
+	msgOptions := getNotificationMessageOptions(team, owner.Name, n.teamsFrontendURL)
+	_, _, err := n.slackAPI.PostMessageContext(ctx, slackUserID, msgOptions...)
 	return err
 }
 
@@ -89,4 +127,19 @@ func teamOwners(team teams.Team) []teams.User {
 	}
 
 	return owners
+}
+
+// ownerShouldReceiveNotification check if an email should receive a notification or not
+func ownerShouldReceiveNotification(email string, ownerEmailsFilter []string) bool {
+	if len(ownerEmailsFilter) == 0 {
+		return true
+	}
+
+	for _, filter := range ownerEmailsFilter {
+		if strings.EqualFold(email, filter) {
+			return true
+		}
+	}
+
+	return false
 }

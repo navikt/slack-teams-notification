@@ -20,3 +20,7 @@ Fetch all teams and members from the [teams-backend](https://github.com/nais/tea
 
 for each member of the team, lookup the user from the Slack API to get the Slack handle, and send a formatted message to 
 the user. Only members with the `OWNER`-role for a team will receive notifications. 
+
+## Configuration
+
+Refer to the [pkg/config](pkg/config/config.go) package for the available configuration parameters for the job.

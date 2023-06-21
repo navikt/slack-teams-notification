@@ -46,8 +46,8 @@ type (
 )
 
 // NewClient create a new client for the teams-backend GraphQL API
-func NewClient(serverURL, apiToken string) Client {
-	return Client{
+func NewClient(serverURL, apiToken string) *Client {
+	return &Client{
 		serverURL: serverURL,
 		apiToken:  apiToken,
 		httpClient: http.Client{
@@ -56,8 +56,9 @@ func NewClient(serverURL, apiToken string) Client {
 	}
 }
 
-// GetTeams Get a list of NAIS teams from the teams backend
-func (c Client) GetTeams(ctx context.Context) ([]Team, error) {
+// GetTeams Get a list of NAIS teams from the teams backend. If teamSlugsFilter is not empty, only team slugs included
+// in that slice will be returned, if they exist on the teams-backend.
+func (c *Client) GetTeams(ctx context.Context, teamSlugsFilter []string) ([]Team, error) {
 	resp, err := c.getNaisTeamsResponse(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("request teams: %w", err)
@@ -82,10 +83,23 @@ func (c Client) GetTeams(ctx context.Context) ([]Team, error) {
 		return nil, fmt.Errorf("unexpected JSON: %s", body)
 	}
 
-	return bodyAsJson.Data.Teams, nil
+	if len(teamSlugsFilter) == 0 {
+		return bodyAsJson.Data.Teams, nil
+	}
+
+	filteredTeams := make([]Team, 0)
+	for _, team := range bodyAsJson.Data.Teams {
+		for _, includeTeam := range teamSlugsFilter {
+			if team.Slug == includeTeam {
+				filteredTeams = append(filteredTeams, team)
+			}
+		}
+	}
+
+	return filteredTeams, nil
 }
 
-func (c Client) getNaisTeamsResponse(ctx context.Context) (*http.Response, error) {
+func (c *Client) getNaisTeamsResponse(ctx context.Context) (*http.Response, error) {
 	teamsQuery := `query {
 		teams {
 			slug

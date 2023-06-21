@@ -13,6 +13,7 @@ import (
 func TestGetTeams(t *testing.T) {
 	const apiToken = "some secret token"
 	ctx := context.Background()
+	emptyTeamSlugsFilter := make([]string, 0)
 
 	t.Run("empty response from server", func(t *testing.T) {
 		ts := httpServerWithHandlers(t, []http.HandlerFunc{
@@ -24,7 +25,7 @@ func TestGetTeams(t *testing.T) {
 		defer ts.Close()
 
 		teamsClient := teams.NewClient(ts.URL, apiToken)
-		naisTeams, err := teamsClient.GetTeams(ctx)
+		naisTeams, err := teamsClient.GetTeams(ctx, emptyTeamSlugsFilter)
 		assert.Nil(t, naisTeams)
 		assert.EqualError(t, err, "decode JSON: unexpected end of JSON input")
 	})
@@ -39,7 +40,7 @@ func TestGetTeams(t *testing.T) {
 		defer ts.Close()
 
 		teamsClient := teams.NewClient(ts.URL, apiToken)
-		naisTeams, err := teamsClient.GetTeams(ctx)
+		naisTeams, err := teamsClient.GetTeams(ctx, emptyTeamSlugsFilter)
 		assert.Nil(t, naisTeams)
 		assert.EqualError(t, err, "unexpected JSON: "+jsonResponse)
 	})
@@ -53,7 +54,7 @@ func TestGetTeams(t *testing.T) {
 		defer ts.Close()
 
 		teamsClient := teams.NewClient(ts.URL, apiToken)
-		naisTeams, err := teamsClient.GetTeams(ctx)
+		naisTeams, err := teamsClient.GetTeams(ctx, emptyTeamSlugsFilter)
 		assert.Nil(t, naisTeams)
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "unexpected response status code:")
@@ -120,7 +121,7 @@ func TestGetTeams(t *testing.T) {
 		defer ts.Close()
 
 		teamsClient := teams.NewClient(ts.URL, apiToken)
-		naisTeams, err := teamsClient.GetTeams(ctx)
+		naisTeams, err := teamsClient.GetTeams(ctx, emptyTeamSlugsFilter)
 		assert.NotNil(t, naisTeams)
 		assert.Len(t, naisTeams, 2)
 		assert.NoError(t, err)
@@ -130,6 +131,56 @@ func TestGetTeams(t *testing.T) {
 		assert.Len(t, naisTeams[0].Members, 2)
 		assert.Len(t, naisTeams[1].Members, 3)
 	})
+
+	t.Run("team slugs filter is not empty", func(t *testing.T) {
+		ts := httpServerWithHandlers(t, []http.HandlerFunc{
+			func(w http.ResponseWriter, r *http.Request) {
+				w.Write([]byte(`
+					{
+						"data": {
+							"teams": [
+								{
+									"slug": "team1",
+									"members": []
+								},
+								{
+									"slug": "team2",
+									"members": []
+								},
+								{
+									"slug": "team3",
+									"members": []
+								},
+								{
+									"slug": "team4",
+									"members": []
+								}
+							]
+						}
+					}
+				`))
+			},
+		})
+		defer ts.Close()
+
+		teamsClient := teams.NewClient(ts.URL, apiToken)
+		naisTeams, err := teamsClient.GetTeams(ctx, []string{"team1", "team3", "team5"})
+		assert.NotNil(t, naisTeams)
+		assert.Len(t, naisTeams, 2)
+		assert.NoError(t, err)
+		assert.Equal(t, "team1", naisTeams[0].Slug)
+		assert.Equal(t, "team3", naisTeams[1].Slug)
+	})
+}
+
+func TestMember_IsOwner(t *testing.T) {
+	assert.False(t, teams.Member{
+		Role: "MEMBER",
+	}.IsOwner())
+
+	assert.True(t, teams.Member{
+		Role: "OWNER",
+	}.IsOwner())
 }
 
 func httpServerWithHandlers(t *testing.T, handlers []http.HandlerFunc) *httptest.Server {
