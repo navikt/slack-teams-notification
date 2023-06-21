@@ -1,0 +1,28 @@
+apiVersion: "nais.io/v1"
+kind: "Naisjob"
+metadata:
+  name: slack-teams-notification
+  namespace: aura
+  labels:
+    team: aura
+spec:
+  image: "{{ IMAGE }}"
+  schedule: "0 10 11 * *"
+  env:
+    - name: TEAMS_BACKEND_URL
+      value: https://teams.nav.cloud.nais.io/query
+    - name: TEAMS_FRONTEND_URL
+      value: https://teams.nav.cloud.nais.io/
+  envFrom:
+    - secret: slack-teams-notification
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  labels:
+    team: aura
+  name: slack-teams-notification
+  namespace: aura
+stringData:
+  SLACK_API_TOKEN: "{{ SLACK_API_TOKEN }}"
+  TEAMS_BACKEND_API_TOKEN: "{{ TEAMS_BACKEND_API_TOKEN }}"

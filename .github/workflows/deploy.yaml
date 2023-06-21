@@ -1,0 +1,32 @@
+name: Build and deploy image
+on: push
+jobs:
+  build_and_push:
+    permissions:
+      contents: "read"
+      id-token: "write"
+    runs-on: ubuntu-22.04
+    outputs:
+      "version": ${{ steps.build_push_sign.outputs.version }}
+    env:
+      BUILDER_IMG: "cgr.dev/chainguard/go:1.20"
+      RUNNER_IMG: "cgr.dev/chainguard/static"
+      BASEIMG_IDENTITY: "https://github.com/chainguard-images/images/.github/workflows/release.yaml@refs/heads/main"
+      BASEIMG_ISSUER: "https://token.actions.githubusercontent.com"
+    steps:
+      - uses: actions/checkout@v3
+      - uses: nais/docker-build-push@v0
+        id: docker-push
+        with:
+          team: aura
+          project_id: ${{ vars.NAIS_MANAGEMENT_PROJECT_ID }}
+          identity_provider: ${{ secrets.NAIS_WORKLOAD_IDENTITY_PROVIDER }}
+      - uses: nais/deploy/actions/deploy@v1
+        env:
+          APIKEY: ${{ secrets.NAIS_DEPLOY_APIKEY }}
+          CLUSTER: prod-gcp
+          RESOURCE: .nais/job.yaml
+          VAR: "\
+            IMAGE=${{ steps.docker-push.outputs.image }},\
+            SLACK_API_TOKEN=${{ secrets.SLACK_API_TOKEN }},\
+            TEAMS_BACKEND_API_TOKEN=${{ secrets.TEAMS_BACKEND_API_TOKEN }}"
