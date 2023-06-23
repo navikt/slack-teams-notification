@@ -49,7 +49,7 @@ func getNotificationMessageOptions(team teams.Team, recipientName, frontendURL s
 		)
 	}
 
-	blocks = append(blocks, mrkdwn("Ser dette korrekt ut? Om ikke kan du administrere teamet i <%s|NAIS teams>. Alle eierne av teamet vil motta denne meldingen.", getTeamsURL(frontendURL, team.Slug)))
+	blocks = append(blocks, mrkdwn("Ser dette korrekt ut? Om ikke kan du administrere teamet i <%s|NAIS teams> (krever <https://doc.nais.io/device/|naisdevice>). Alle eierne av teamet vil motta denne meldingen.", getTeamsURL(frontendURL, team.Slug)))
 
 	if len(ownerNames) == 1 {
 		blocks = append(blocks, mrkdwn("*NB!* Du står oppført som den eneste eieren av dette teamet, det *bør* være minst to eiere av hvert team."))
