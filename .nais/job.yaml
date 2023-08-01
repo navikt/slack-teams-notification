@@ -15,6 +15,10 @@ spec:
       value: https://teams.nav.cloud.nais.io/
   envFrom:
     - secret: slack-teams-notification
+  accessPolicy:
+    outbound:
+      external:
+        - host: teams.nav.cloud.nais.io
 ---
 apiVersion: v1
 kind: Secret
