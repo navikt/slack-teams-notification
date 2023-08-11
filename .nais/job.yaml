@@ -19,6 +19,7 @@ spec:
     outbound:
       external:
         - host: teams.nav.cloud.nais.io
+        - host: slack.com
 ---
 apiVersion: v1
 kind: Secret
