@@ -20,6 +20,6 @@ func TestNotifier_NotifyTeams(t *testing.T) {
 
 	t.Run("no teams", func(t *testing.T) {
 		notifier := slack.NewNotifier(token, frontendURL, slack.OptionLogger(log))
-		assert.NoError(t, notifier.NotifyTeams(ctx, []teams.Team{}, []string{}))
+		assert.NoError(t, notifier.NotifyTeams(ctx, []teams.Team{}))
 	})
 }

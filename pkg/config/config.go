@@ -10,10 +10,6 @@ type (
 		Slack *slackConfig
 		Teams *teamsConfig
 
-		// OwnersFilter Specify a list of owner emails that should receive notifications. All other owners will be
-		// ignored when set.
-		OwnersFilter []string `envconfig:"OWNERS_FILTER"`
-
 		// TeamsFilter Specify a list of team slugs that should be included when sending notifications. All other teams
 		// will be ignored when set.
 		TeamsFilter []string `envconfig:"TEAMS_FILTER"`
