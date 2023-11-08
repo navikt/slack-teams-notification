@@ -48,7 +48,7 @@ func run() error {
 
 	err = slack.
 		NewNotifier(cfg.Slack.APIToken, cfg.Teams.FrontendURL).
-		NotifyTeams(ctx, naisTeams[:3])
+		NotifyTeams(ctx, naisTeams)
 	if err != nil {
 		return err
 	}
