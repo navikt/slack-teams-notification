@@ -56,7 +56,7 @@ func (n *Notifier) NotifyTeams(ctx context.Context, teams []teams.Team) error {
 func (n *Notifier) notifyTeam(ctx context.Context, team teams.Team) error {
 	logger := n.logger.WithField("team_slug", team.Slug)
 	msgOptions := getNotificationMessageOptions(team, n.teamsFrontendURL)
-	_, _, err := n.slackAPI.PostMessageContext(ctx, team.SlackChannel, msgOptions...)
+	_, _, err := n.slackAPI.PostMessageContext(ctx, "jk-tullekanal", msgOptions...)
 	logger.Infof("'%s' notified", team.Slug)
 	return err
 }
