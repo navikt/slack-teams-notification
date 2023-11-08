@@ -34,24 +34,10 @@ func NewNotifier(slackApiToken, teamsFrontendURL string, options ...Option) *Not
 	return notifier
 }
 
-// OptionSleepDuration Set a custom sleep duration
-func OptionSleepDuration(d time.Duration) func(*Notifier) {
-	return func(n *Notifier) {
-		n.sleepDuration = d
-	}
-}
-
 // OptionLogger Set a custom logger
 func OptionLogger(logger *logrus.Entry) func(*Notifier) {
 	return func(n *Notifier) {
 		n.logger = logger
-	}
-}
-
-// OptionSlackApi Set a custom Slack API client
-func OptionSlackApi(client *slackapi.Client) func(*Notifier) {
-	return func(n *Notifier) {
-		n.slackAPI = client
 	}
 }
 
