@@ -2,7 +2,6 @@ package slack
 
 import (
 	"context"
-	"strings"
 	"time"
 
 	"github.com/nais/slack-teams-notification/pkg/teams"
@@ -56,11 +55,10 @@ func OptionSlackApi(client *slackapi.Client) func(*Notifier) {
 	}
 }
 
-// NotifyTeams Notify all team owners on Slack that they need to keep their teams up to date with regards to
-// owners/members
+// NotifyTeams Notify all team owners on Slack that they need to keep their teams up to date
 func (n *Notifier) NotifyTeams(ctx context.Context, teams []teams.Team, ownerEmailsFilter []string) error {
 	for _, team := range teams {
-		err := n.notifyTeam(ctx, team, ownerEmailsFilter)
+		err := n.notifyTeam(ctx, team)
 		if err != nil {
 			return err
 		}
@@ -68,75 +66,11 @@ func (n *Notifier) NotifyTeams(ctx context.Context, teams []teams.Team, ownerEma
 	return nil
 }
 
-// notifyTeam Send notifications about a team to the owners of the team
-func (n *Notifier) notifyTeam(ctx context.Context, team teams.Team, ownerEmailsFilter []string) error {
+// notifyTeam Send notifications about a team to the channel they have supplied
+func (n *Notifier) notifyTeam(ctx context.Context, team teams.Team) error {
 	logger := n.logger.WithField("team_slug", team.Slug)
-
-	owners := teamOwners(team, ownerEmailsFilter)
-	if len(owners) == 0 {
-		logger.Warnf("team does not have any owners, unable to notify")
-		return nil
-	}
-
-	for _, owner := range owners {
-		email := owner.Email
-
-		logger = logger.WithField("user_email", email)
-
-		slackUser, err := n.slackAPI.GetUserByEmailContext(ctx, email)
-		if err != nil {
-			logger.WithError(err).Errorf("unable to lookup Slack user")
-			continue
-		}
-
-		logger = logger.WithFields(logrus.Fields{
-			"user_slack_id":   slackUser.ID,
-			"user_slack_name": slackUser.RealName,
-		})
-
-		err = n.notifyOwner(ctx, team, owner, slackUser.ID)
-		if err != nil {
-			logger.WithError(err).Errorf("unable to notify Slack user")
-			continue
-		}
-
-		logger.Infof("owner notified")
-		time.Sleep(n.sleepDuration)
-	}
-
-	return nil
-}
-
-// notifyOwner Send a notification to a specific owner regarding a team
-func (n *Notifier) notifyOwner(ctx context.Context, team teams.Team, owner teams.User, slackUserID string) error {
-	msgOptions := getNotificationMessageOptions(team, owner.Name, n.teamsFrontendURL)
-	_, _, err := n.slackAPI.PostMessageContext(ctx, slackUserID, msgOptions...)
+	msgOptions := getNotificationMessageOptions(team, n.teamsFrontendURL)
+	_, _, err := n.slackAPI.PostMessageContext(ctx, team.SlackChannel, msgOptions...)
+	logger.Infof("'%s' notified", team.Slug)
 	return err
-}
-
-// teamOwners return a list of team owners for a team
-func teamOwners(team teams.Team, ownerEmailsFilter []string) []teams.User {
-	owners := make([]teams.User, 0)
-	for _, member := range team.Members {
-		if member.IsOwner() && ownerShouldReceiveNotification(member.User.Email, ownerEmailsFilter) {
-			owners = append(owners, member.User)
-		}
-	}
-
-	return owners
-}
-
-// ownerShouldReceiveNotification check if an email should receive a notification or not
-func ownerShouldReceiveNotification(email string, ownerEmailsFilter []string) bool {
-	if len(ownerEmailsFilter) == 0 {
-		return true
-	}
-
-	for _, filter := range ownerEmailsFilter {
-		if strings.EqualFold(email, filter) {
-			return true
-		}
-	}
-
-	return false
 }

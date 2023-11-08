@@ -16,10 +16,10 @@ func header(format string, args ...any) *slackapi.HeaderBlock {
 	return slackapi.NewHeaderBlock(slackapi.NewTextBlockObject("plain_text", fmt.Sprintf(format, args...), false, false))
 }
 
-func getNotificationMessageOptions(team teams.Team, recipientName, frontendURL string) []slackapi.MsgOption {
+func getNotificationMessageOptions(team teams.Team, frontendURL string) []slackapi.MsgOption {
 	blocks := []slackapi.Block{
-		mrkdwn("Hei %s,", recipientName),
-		mrkdwn("du står som *eier* av NAIS teamet `%s`, og er derfor ansvarlig for å holde teamet oppdatert med tanke på hvem som er medlem. Fordi medlemsskap i NAIS teams gir utvidede rettigheter til blant annet produksjonsmiljø og persondata er det viktig å holde teamene oppdatert.", team.Slug),
+		mrkdwn("👋 Hei %s,", team.Slug),
+		mrkdwn("dere er ansvarlige for å holde teamet oppdatert med tanke på hvem som er medlem. Fordi medlemsskap i NAIS teams gir utvidede rettigheter til blant annet produksjonsmiljø og persondata er det viktig å holde teamene oppdatert."),
 		mrkdwn("Følgende brukere ligger i dag inne som medlemmer / eiere i `%s`:", team.Slug),
 	}
 
@@ -51,8 +51,8 @@ func getNotificationMessageOptions(team teams.Team, recipientName, frontendURL s
 
 	blocks = append(blocks, mrkdwn("Ser dette korrekt ut? Om ikke kan du administrere teamet i <%s|NAIS teams> (krever <https://doc.nais.io/device/|naisdevice>). Alle eierne av teamet vil motta denne meldingen.", getTeamsURL(frontendURL, team.Slug)))
 
-	if len(ownerNames) == 1 {
-		blocks = append(blocks, mrkdwn("*NB!* Du står oppført som den eneste eieren av dette teamet, det *bør* være minst to eiere av hvert team."))
+	if len(ownerNames) < 2 {
+		blocks = append(blocks, mrkdwn(fmt.Sprintf("*NB!* Antall eiere for dette teamet er %d, det *bør* være minst to eiere av hvert team.", len(ownerNames))))
 	}
 
 	return []slackapi.MsgOption{

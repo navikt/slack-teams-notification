@@ -24,8 +24,9 @@ type (
 	}
 
 	Team struct {
-		Slug    string   `json:"slug"`
-		Members []Member `json:"members"`
+		Slug         string   `json:"slug"`
+		SlackChannel string   `json:"slackChannel"`
+		Members      []Member `json:"members"`
 	}
 
 	Member struct {
