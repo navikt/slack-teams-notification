@@ -30,7 +30,7 @@ jobs:
         env:
           APIKEY: ${{ secrets.NAIS_DEPLOY_APIKEY }}
           CLUSTER: prod-gcp
-          RESOURCE: .nais/job.yaml,.nais/alerts.yaml
+          RESOURCE: .nais/job.yaml
           VAR: "\
             IMAGE=${{ steps.docker-push.outputs.image }},\
             SLACK_API_TOKEN=${{ secrets.SLACK_API_TOKEN }},\
