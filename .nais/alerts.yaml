@@ -1,0 +1,20 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: slack-teams-notification
+  namespace: aura
+spec:
+  groups:
+    - name: aura
+      rules:
+        - alert: Naisjob failed
+          expr: kube_job_failed{job_name=~"^slack-teams-notification.*", namespace="aura"} > 0
+          for: 5m
+          annotations:
+            consequence: Teams are not being reminded
+            action: "check the logs"
+            summary: |-
+              Notifies if the latest run failed
+          labels:
+            namespace: aura
+            severity: warning
