@@ -1,5 +1,10 @@
 name: Build and deploy image
-on: push
+on:
+  push:
+    branches:
+      - main
+    paths-ignore:
+      - "*.md"
 jobs:
   build_and_push:
     permissions:
