@@ -42,14 +42,13 @@ func OptionLogger(logger *logrus.Entry) func(*Notifier) {
 }
 
 // NotifyTeams Notify all team owners on Slack that they need to keep their teams up to date
-func (n *Notifier) NotifyTeams(ctx context.Context, teams []teams.Team) error {
+func (n *Notifier) NotifyTeams(ctx context.Context, teams []teams.Team) {
 	for _, team := range teams {
 		err := n.notifyTeam(ctx, team)
 		if err != nil {
-			return err
+			n.logger.Errorf("posting msg to channel '%s': %v", team.SlackChannel, err)
 		}
 	}
-	return nil
 }
 
 // notifyTeam Send notifications about a team to the channel they have supplied
