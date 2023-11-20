@@ -104,6 +104,7 @@ func (c *Client) getNaisTeamsResponse(ctx context.Context) (*http.Response, erro
 	teamsQuery := `query {
 		teams {
 			slug
+			slackChannel
 			members {
 				user {
 					name
