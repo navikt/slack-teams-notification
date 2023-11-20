@@ -41,7 +41,7 @@ func OptionLogger(logger *logrus.Entry) func(*Notifier) {
 	}
 }
 
-// NotifyTeams Notify all team owners on Slack that they need to keep their teams up to date
+// NotifyTeams Notify all teams on Slack that they need to keep their teams up to date
 func (n *Notifier) NotifyTeams(ctx context.Context, teams []teams.Team) {
 	for _, team := range teams {
 		err := n.notifyTeam(ctx, team)
@@ -51,11 +51,40 @@ func (n *Notifier) NotifyTeams(ctx context.Context, teams []teams.Team) {
 	}
 }
 
-// notifyTeam Send notifications about a team to the channel they have supplied
 func (n *Notifier) notifyTeam(ctx context.Context, team teams.Team) error {
 	logger := n.logger.WithField("team_slug", team.Slug)
 	msgOptions := getNotificationMessageOptions(team, n.teamsFrontendURL)
-	_, _, err := n.slackAPI.PostMessageContext(ctx, team.SlackChannel, msgOptions...)
-	logger.Infof("'%s' notified", team.Slug)
-	return err
+	var recipients []string
+	owners := ownersOf(team)
+	for _, member := range owners {
+		slackUser, err := n.slackAPI.GetUserByEmailContext(ctx, member.Email)
+		if err != nil {
+			return err
+		}
+		recipients = append(recipients, slackUser.ID)
+	}
+	if len(recipients) == 0 {
+		recipients = append(recipients, team.SlackChannel)
+	}
+	for _, recipient := range recipients {
+		_, _, err := n.slackAPI.PostMessageContext(ctx, recipient, msgOptions...)
+		if err != nil {
+			logger.Errorf("posting message to %s: %v", recipient, err)
+		} else {
+			logger.Infof("'%s' notified", team.Slug)
+		}
+	}
+
+	return nil
+}
+
+func ownersOf(team teams.Team) []teams.User {
+	owners := make([]teams.User, 0)
+	for _, member := range team.Members {
+		if member.IsOwner() {
+			owners = append(owners, member.User)
+		}
+	}
+
+	return owners
 }
