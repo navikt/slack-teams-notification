@@ -1,6 +1,6 @@
 module github.com/nais/slack-teams-notification
 
-go 1.21.3
+go 1.22.0
 
 require (
 	github.com/kelseyhightower/envconfig v1.4.0
