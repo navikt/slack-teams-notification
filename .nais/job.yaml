@@ -9,16 +9,16 @@ spec:
   image: "{{ IMAGE }}"
   schedule: "0 10 11 * *"
   env:
-    - name: TEAMS_BACKEND_URL
-      value: https://teams.nav.cloud.nais.io/query
-    - name: TEAMS_FRONTEND_URL
+    - name: NAIS_API_URL
+      value: https://console.nav.cloud.nais.io/query
+    - name: CONSOLE_FRONTEND_URL
       value: https://teams.nav.cloud.nais.io/
   envFrom:
     - secret: slack-teams-notification
   accessPolicy:
     outbound:
       external:
-        - host: teams.nav.cloud.nais.io
+        - host: console.nav.cloud.nais.io
         - host: slack.com
 ---
 apiVersion: v1
@@ -30,4 +30,4 @@ metadata:
   namespace: nais
 stringData:
   SLACK_API_TOKEN: "{{ SLACK_API_TOKEN }}"
-  TEAMS_BACKEND_API_TOKEN: "{{ TEAMS_BACKEND_API_TOKEN }}"
+  NAIS_API_TOKEN: "{{ NAIS_API_TOKEN }}"

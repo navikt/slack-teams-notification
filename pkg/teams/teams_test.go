@@ -1,7 +1,6 @@
 package teams_test
 
 import (
-	"context"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -12,7 +11,6 @@ import (
 
 func TestGetTeams(t *testing.T) {
 	const apiToken = "some secret token"
-	ctx := context.Background()
 	emptyTeamSlugsFilter := make([]string, 0)
 
 	t.Run("empty response from server", func(t *testing.T) {
@@ -25,12 +23,12 @@ func TestGetTeams(t *testing.T) {
 		defer ts.Close()
 
 		teamsClient := teams.NewClient(ts.URL, apiToken)
-		naisTeams, err := teamsClient.GetTeams(ctx, emptyTeamSlugsFilter)
+		naisTeams, err := teamsClient.GetTeams(emptyTeamSlugsFilter)
 		assert.Nil(t, naisTeams)
-		assert.EqualError(t, err, "decode JSON: unexpected end of JSON input")
+		assert.ErrorContains(t, err, "unexpected end of JSON input")
 	})
 
-	t.Run("incorrect JSON from server", func(t *testing.T) {
+	t.Run("no hits yield empty array", func(t *testing.T) {
 		jsonResponse := `{"teams":[{"slug":"slug"}]}`
 		ts := httpServerWithHandlers(t, []http.HandlerFunc{
 			func(w http.ResponseWriter, r *http.Request) {
@@ -40,9 +38,9 @@ func TestGetTeams(t *testing.T) {
 		defer ts.Close()
 
 		teamsClient := teams.NewClient(ts.URL, apiToken)
-		naisTeams, err := teamsClient.GetTeams(ctx, emptyTeamSlugsFilter)
-		assert.Nil(t, naisTeams)
-		assert.EqualError(t, err, "unexpected JSON: "+jsonResponse)
+		naisTeams, err := teamsClient.GetTeams(emptyTeamSlugsFilter)
+		assert.Nil(t, err)
+		assert.Empty(t, naisTeams)
 	})
 
 	t.Run("unexpected response status code", func(t *testing.T) {
@@ -54,10 +52,10 @@ func TestGetTeams(t *testing.T) {
 		defer ts.Close()
 
 		teamsClient := teams.NewClient(ts.URL, apiToken)
-		naisTeams, err := teamsClient.GetTeams(ctx, emptyTeamSlugsFilter)
+		naisTeams, err := teamsClient.GetTeams(emptyTeamSlugsFilter)
 		assert.Nil(t, naisTeams)
 		assert.Error(t, err)
-		assert.Contains(t, err.Error(), "unexpected response status code:")
+		assert.Contains(t, err.Error(), "got a 400")
 	})
 
 	t.Run("teams in response", func(t *testing.T) {
@@ -66,7 +64,7 @@ func TestGetTeams(t *testing.T) {
 				w.Write([]byte(`
 					{
 						"data": {
-							"teams": [
+							"nodes": [
 								{
 									"slug": "team1",
 									"members": [
@@ -112,7 +110,12 @@ func TestGetTeams(t *testing.T) {
 										}
 									]
 								}
-							]
+							],
+                            "pageInfo": {
+                                 "totalCount": 0,
+                                 "hasNextPage": false,
+                                 "hasPreviousPage": false
+                            }
 						}
 					}
 				`))
@@ -121,7 +124,7 @@ func TestGetTeams(t *testing.T) {
 		defer ts.Close()
 
 		teamsClient := teams.NewClient(ts.URL, apiToken)
-		naisTeams, err := teamsClient.GetTeams(ctx, emptyTeamSlugsFilter)
+		naisTeams, err := teamsClient.GetTeams(emptyTeamSlugsFilter)
 		assert.NotNil(t, naisTeams)
 		assert.Len(t, naisTeams, 2)
 		assert.NoError(t, err)
@@ -138,7 +141,7 @@ func TestGetTeams(t *testing.T) {
 				w.Write([]byte(`
 					{
 						"data": {
-							"teams": [
+							"nodes": [
 								{
 									"slug": "team1",
 									"members": []
@@ -155,7 +158,12 @@ func TestGetTeams(t *testing.T) {
 									"slug": "team4",
 									"members": []
 								}
-							]
+							],
+                            "pageInfo": {
+                                 "totalCount": 0,
+                                 "hasNextPage": false,
+                                 "hasPreviousPage": false
+                            }	
 						}
 					}
 				`))
@@ -164,7 +172,7 @@ func TestGetTeams(t *testing.T) {
 		defer ts.Close()
 
 		teamsClient := teams.NewClient(ts.URL, apiToken)
-		naisTeams, err := teamsClient.GetTeams(ctx, []string{"team1", "team3", "team5"})
+		naisTeams, err := teamsClient.GetTeams([]string{"team1", "team3", "team5"})
 		assert.NotNil(t, naisTeams)
 		assert.Len(t, naisTeams, 2)
 		assert.NoError(t, err)

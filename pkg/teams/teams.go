@@ -2,11 +2,11 @@ package teams
 
 import (
 	"bytes"
-	"context"
 	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
+	"strings"
 	"time"
 )
 
@@ -20,7 +20,14 @@ type (
 	}
 
 	apiResponseData struct {
-		Teams []Team `json:"teams"`
+		Teams    []Team   `json:"nodes"`
+		PageInfo PageInfo `json:"pageInfo"`
+	}
+
+	PageInfo struct {
+		TotalCount  int  `json:"totalCount"`
+		HasNext     bool `json:"hasNextPage"`
+		HasPrevious bool `json:"hasPreviousPage"`
 	}
 
 	Team struct {
@@ -46,7 +53,8 @@ type (
 	}
 )
 
-// NewClient create a new client for the teams-backend GraphQL API
+var httpClient = http.Client{}
+
 func NewClient(serverURL, apiToken string) *Client {
 	return &Client{
 		serverURL: serverURL,
@@ -57,39 +65,26 @@ func NewClient(serverURL, apiToken string) *Client {
 	}
 }
 
-// GetTeams Get a list of NAIS teams from the teams backend. If teamSlugsFilter is not empty, only team slugs included
-// in that slice will be returned, if they exist on the teams-backend.
-func (c *Client) GetTeams(ctx context.Context, teamSlugsFilter []string) ([]Team, error) {
-	resp, err := c.getNaisTeamsResponse(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("request teams: %w", err)
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != 200 {
-		return nil, fmt.Errorf("unexpected response status code: %s", resp.Status)
-	}
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return nil, fmt.Errorf("read response body: %w", err)
-	}
-
-	bodyAsJson := &apiResponse{}
-	err = json.Unmarshal(body, bodyAsJson)
-	if err != nil {
-		return nil, fmt.Errorf("decode JSON: %w", err)
-	}
-
-	if bodyAsJson.Data.Teams == nil {
-		return nil, fmt.Errorf("unexpected JSON: %s", body)
+func (c *Client) GetTeams(teamSlugsFilter []string) ([]Team, error) {
+	var teams []Team
+	hasNext := true
+	teamsOffset := 0
+	for hasNext {
+		response, err := c.requestPage(teamsOffset, 100)
+		if err != nil {
+			return nil, fmt.Errorf("performing request: %w", err)
+		}
+		teams = append(teams, response.Data.Teams...)
+		teamsOffset += response.Data.PageInfo.TotalCount
+		hasNext = response.Data.PageInfo.HasNext
 	}
 
 	if len(teamSlugsFilter) == 0 {
-		return bodyAsJson.Data.Teams, nil
+		return teams, nil
 	}
 
 	filteredTeams := make([]Team, 0)
-	for _, team := range bodyAsJson.Data.Teams {
+	for _, team := range teams {
 		for _, includeTeam := range teamSlugsFilter {
 			if team.Slug == includeTeam {
 				filteredTeams = append(filteredTeams, team)
@@ -100,33 +95,76 @@ func (c *Client) GetTeams(ctx context.Context, teamSlugsFilter []string) ([]Team
 	return filteredTeams, nil
 }
 
-func (c *Client) getNaisTeamsResponse(ctx context.Context) (*http.Response, error) {
-	teamsQuery := `query {
-		teams {
-			slug
-			slackChannel
-			members {
-				user {
-					name
-					email
-				}
-				role
-			}
+func (c *Client) requestPage(teamsOffset, teamsLimit int) (apiResponse, error) {
+	queryString := fmt.Sprintf(`"queryString TeamsAndMembers(
+	  $teamsOffset: Int!
+	  $teamsLimit: Int!
+	  $membersOffset: Int!
+	  $membersLimit: Int!
+	) {
+	  teams(offset: $teamsOffset, limit: $teamsLimit) {
+		pageInfo {
+		  hasNextPage
 		}
-	}`
-	payload, err := json.Marshal(map[string]string{"query": teamsQuery})
+		nodes {
+		  slug
+		  members(offset: $membersOffset, limit: $membersLimit) {
+			pageInfo {
+			  hasNextPage
+			}
+			nodes {
+			  user {
+				name
+				email
+			  }
+			  role
+			}    
+		  }
+		}  
+	  }
+	}",
+	"variables": {
+	  "teamsOffset": %d, 
+	  "limit": %d,
+	  "membersOffset": %d,
+	  "membersLimit": %d
+	}`, teamsOffset, teamsLimit, 0, 100)
+	requestBody, err := json.Marshal(map[string]string{"query": strings.ReplaceAll(queryString, "\n", " ")})
 	if err != nil {
-		return nil, fmt.Errorf("create request payload for teams-backend: %w", err)
+		return apiResponse{}, fmt.Errorf("marshal request payload: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, http.MethodPost, c.serverURL, bytes.NewBuffer(payload))
+	response, err := c.PerformGQLRequest(requestBody)
 	if err != nil {
-		return nil, fmt.Errorf("create request for teams-backend: %w", err)
+		return apiResponse{}, fmt.Errorf("http: %w", err)
 	}
+	var deserialized apiResponse
+	err = json.Unmarshal(response, &deserialized)
+	if err != nil {
+		return apiResponse{}, fmt.Errorf("unmarshaling response body: %w", err)
+	}
+	return deserialized, nil
+}
 
-	request.Header.Set("Authorization", "Bearer "+c.apiToken)
-	request.Header.Set("Content-Type", "application/json")
-	return c.httpClient.Do(request)
+func (c *Client) PerformGQLRequest(body []byte) ([]byte, error) {
+	req, err := http.NewRequest("POST", c.serverURL, bytes.NewBuffer(body))
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", c.apiToken))
+	req.Header.Set("Content-Type", "application/json")
+	res, err := httpClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	if res.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("got a %d from %s: %v", res.StatusCode, c.serverURL, res)
+	}
+	resBody, err := io.ReadAll(res.Body)
+	if err != nil {
+		return nil, err
+	}
+	return resBody, nil
 }
 
 func (m Member) IsOwner() bool {

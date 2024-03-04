@@ -36,7 +36,7 @@ func run() error {
 
 	naisTeams, err := teams.
 		NewClient(cfg.Teams.BackendURL, cfg.Teams.APIToken).
-		GetTeams(ctx, cfg.TeamsFilter)
+		GetTeams(cfg.TeamsFilter)
 	if err != nil {
 		return err
 	}
