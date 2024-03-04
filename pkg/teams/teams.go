@@ -25,9 +25,8 @@ type (
 	}
 
 	PageInfo struct {
-		TotalCount  int  `json:"totalCount"`
-		HasNext     bool `json:"hasNextPage"`
-		HasPrevious bool `json:"hasPreviousPage"`
+		TotalCount int  `json:"totalCount"`
+		HasNext    bool `json:"hasNextPage"`
 	}
 
 	Team struct {
@@ -96,7 +95,7 @@ func (c *Client) GetTeams(teamSlugsFilter []string) ([]Team, error) {
 }
 
 func (c *Client) requestPage(teamsOffset, teamsLimit int) (apiResponse, error) {
-	queryString := fmt.Sprintf(`"queryString TeamsAndMembers(
+	queryString := fmt.Sprintf(`"query TeamsAndMembers(
 	  $teamsOffset: Int!
 	  $teamsLimit: Int!
 	  $membersOffset: Int!
@@ -105,6 +104,7 @@ func (c *Client) requestPage(teamsOffset, teamsLimit int) (apiResponse, error) {
 	  teams(offset: $teamsOffset, limit: $teamsLimit) {
 		pageInfo {
 		  hasNextPage
+		  totalCount
 		}
 		nodes {
 		  slug
@@ -129,12 +129,11 @@ func (c *Client) requestPage(teamsOffset, teamsLimit int) (apiResponse, error) {
 	  "membersOffset": %d,
 	  "membersLimit": %d
 	}`, teamsOffset, teamsLimit, 0, 100)
-	requestBody, err := json.Marshal(map[string]string{"query": strings.ReplaceAll(queryString, "\n", " ")})
-	if err != nil {
-		return apiResponse{}, fmt.Errorf("marshal request payload: %w", err)
-	}
-
-	response, err := c.PerformGQLRequest(requestBody)
+	requestBody := strings.ReplaceAll(
+		fmt.Sprintf(`{"query": %s}`, queryString), "\n", " ",
+	)
+	fmt.Println(requestBody)
+	response, err := c.PerformGQLRequest([]byte(requestBody))
 	if err != nil {
 		return apiResponse{}, fmt.Errorf("http: %w", err)
 	}
