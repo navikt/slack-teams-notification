@@ -96,42 +96,43 @@ func (c *Client) GetTeams(teamSlugsFilter []string) ([]Team, error) {
 
 func (c *Client) requestPage(teamsOffset, teamsLimit int) (apiResponse, error) {
 	queryString := fmt.Sprintf(`"query TeamsAndMembers(
-	  $teamsOffset: Int!
-	  $teamsLimit: Int!
-	  $membersOffset: Int!
-	  $membersLimit: Int!
-	) {
-	  teams(offset: $teamsOffset, limit: $teamsLimit) {
-		pageInfo {
-		  hasNextPage
-		  totalCount
-		}
-		nodes {
-		  slug
-		  members(offset: $membersOffset, limit: $membersLimit) {
-			pageInfo {
-			  hasNextPage
-			}
-			nodes {
-			  user {
-				name
-				email
-			  }
-			  role
-			}    
-		  }
-		}  
-	  }
-	}",
-	"variables": {
-	  "teamsOffset": %d, 
-	  "limit": %d,
-	  "membersOffset": %d,
-	  "membersLimit": %d
-	}`, teamsOffset, teamsLimit, 0, 100)
+      $teamsOffset: Int!
+      $teamsLimit: Int!
+      $membersOffset: Int!
+      $membersLimit: Int!
+    ) {
+        teams(offset: $teamsOffset, limit: $teamsLimit) {
+          pageInfo {
+          hasNextPage
+          totalCount
+        }
+          nodes {
+          slug
+          members(offset: $membersOffset, limit: $membersLimit) {
+            pageInfo {
+              hasNextPage
+            }
+            nodes {
+              user {
+                name
+                email
+              }
+              role
+            }
+          }
+        }
+      }
+    }",
+    "variables": {
+      "teamsOffset": %d, 
+      "limit": %d,
+      "membersOffset": %d,
+      "membersLimit": %d
+    }`, teamsOffset, teamsLimit, 0, 100)
 	requestBody := strings.ReplaceAll(
 		fmt.Sprintf(`{"query": %s}`, queryString), "\n", " ",
 	)
+	fmt.Println(requestBody)
 	response, err := c.PerformGQLRequest([]byte(requestBody))
 	if err != nil {
 		return apiResponse{}, fmt.Errorf("http: %w", err)
