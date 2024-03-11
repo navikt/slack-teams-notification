@@ -80,7 +80,7 @@ func (n *Notifier) notifyTeam(ctx context.Context, team teams.Team) error {
 
 func ownersOf(team teams.Team) []teams.User {
 	owners := make([]teams.User, 0)
-	for _, member := range team.Members {
+	for _, member := range team.Members.Members {
 		if member.IsOwner() {
 			owners = append(owners, member.User)
 		}

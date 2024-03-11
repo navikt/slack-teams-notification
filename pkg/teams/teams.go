@@ -30,9 +30,14 @@ type (
 	}
 
 	Team struct {
-		Slug         string   `json:"slug"`
-		SlackChannel string   `json:"slackChannel"`
-		Members      []Member `json:"members"`
+		Slug         string  `json:"slug"`
+		SlackChannel string  `json:"slackChannel"`
+		Members      Members `json:"members"`
+	}
+
+	Members struct {
+		Members  []Member `json:"nodes"`
+		PageInfo PageInfo `json:"pageInfo"`
 	}
 
 	Member struct {
@@ -132,7 +137,6 @@ func (c *Client) requestPage(teamsOffset, teamsLimit int) (apiResponse, error) {
 	requestBody := strings.ReplaceAll(
 		fmt.Sprintf(`{"query": %s}`, queryString), "\n", " ",
 	)
-	fmt.Println(requestBody)
 	response, err := c.PerformGQLRequest([]byte(requestBody))
 	if err != nil {
 		return apiResponse{}, fmt.Errorf("http: %w", err)

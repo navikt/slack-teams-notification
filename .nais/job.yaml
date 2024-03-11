@@ -12,7 +12,7 @@ spec:
     - name: NAIS_API_URL
       value: https://console.nav.cloud.nais.io/query
     - name: CONSOLE_FRONTEND_URL
-      value: https://teams.nav.cloud.nais.io/
+      value: https://console.nav.cloud.nais.io/
   envFrom:
     - secret: slack-teams-notification
   accessPolicy:
