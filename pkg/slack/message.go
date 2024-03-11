@@ -66,5 +66,5 @@ func getNotificationMessageOptions(team teams.Team, frontendURL string) []slacka
 
 func getTeamsURL(baseURL, teamSlug string) string {
 	baseURL = strings.TrimSuffix(baseURL, "/")
-	return fmt.Sprintf("%s/teams/%s", baseURL, teamSlug)
+	return fmt.Sprintf("%s/team/%s/members", baseURL, teamSlug)
 }
