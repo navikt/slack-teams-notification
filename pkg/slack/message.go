@@ -49,7 +49,7 @@ func getNotificationMessageOptions(team teams.Team, frontendURL string) []slacka
 		)
 	}
 
-	blocks = append(blocks, mrkdwn("Ser dette korrekt ut? Om ikke kan du administrere teamet i <%s|NAIS teams> (krever <https://doc.nais.io/device/|naisdevice>).", getTeamsURL(frontendURL, team.Slug)))
+	blocks = append(blocks, mrkdwn("Ser dette korrekt ut? Om ikke kan du administrere teamet i <%s|NAIS teams> (krever <https://docs.nais.io/explanation/naisdevice/|naisdevice>).", getTeamsURL(frontendURL, team.Slug)))
 
 	if len(ownerNames) < 2 {
 		blocks = append(blocks, mrkdwn(fmt.Sprintf("*NB!* Antall eiere for dette teamet er %d, det *bør* være minst to eiere av hvert team.", len(ownerNames))))
