@@ -101,12 +101,12 @@ func (c *Client) requestPage(teamsOffset, teamsLimit int) (apiResponse, error) {
       $membersOffset: Int!
       $membersLimit: Int!
     ) {
-        teams(offset: $teamsOffset, limit: $teamsLimit) {
-          pageInfo {
+      teams(offset: $teamsOffset, limit: $teamsLimit) {
+        pageInfo {
           hasNextPage
           totalCount
         }
-          nodes {
+        nodes {
           slug
           members(offset: $membersOffset, limit: $membersLimit) {
             pageInfo {
@@ -125,7 +125,7 @@ func (c *Client) requestPage(teamsOffset, teamsLimit int) (apiResponse, error) {
     }",
     "variables": {
       "teamsOffset": %d, 
-      "limit": %d,
+      "teamsLimit": %d,
       "membersOffset": %d,
       "membersLimit": %d
     }`, teamsOffset, teamsLimit, 0, 100)
