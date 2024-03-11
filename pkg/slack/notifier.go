@@ -67,6 +67,7 @@ func (n *Notifier) notifyTeam(ctx context.Context, team teams.Team) error {
 		recipients = append(recipients, team.SlackChannel)
 	}
 	for _, recipient := range recipients {
+		time.Sleep(time.Second)
 		_, _, err := n.slackAPI.PostMessageContext(ctx, "jk-tullekanal", msgOptions...)
 		if err != nil {
 			logger.Errorf("posting message to %s: %v", recipient, err)
