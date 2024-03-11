@@ -25,7 +25,7 @@ func getNotificationMessageOptions(team teams.Team, frontendURL string) []slacka
 
 	memberNames := make([]string, 0)
 	ownerNames := make([]string, 0)
-	for _, member := range team.Members {
+	for _, member := range team.Members.Members {
 		name := member.User.Name
 		if member.IsOwner() {
 			ownerNames = append(ownerNames, "- "+name)

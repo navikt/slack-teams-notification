@@ -16,7 +16,9 @@ const (
 
 type (
 	apiResponse struct {
-		Data apiResponseData `json:"data"`
+		Data struct {
+			Teams apiResponseData `json:"teams"`
+		} `json:"data"`
 	}
 
 	apiResponseData struct {
@@ -78,9 +80,9 @@ func (c *Client) GetTeams(teamSlugsFilter []string) ([]Team, error) {
 		if err != nil {
 			return nil, fmt.Errorf("performing request: %w", err)
 		}
-		teams = append(teams, response.Data.Teams...)
-		teamsOffset += response.Data.PageInfo.TotalCount
-		hasNext = response.Data.PageInfo.HasNext
+		teams = append(teams, response.Data.Teams.Teams...)
+		teamsOffset += response.Data.Teams.PageInfo.TotalCount
+		hasNext = response.Data.Teams.PageInfo.HasNext
 	}
 
 	if len(teamSlugsFilter) == 0 {

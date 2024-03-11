@@ -64,57 +64,63 @@ func TestGetTeams(t *testing.T) {
 				w.Write([]byte(`
 					{
 						"data": {
-							"nodes": [
-								{
-									"slug": "team1",
-									"members": [
-										{
-											"user": {
-												"name": "User Name",
-												"email": "user.name@example.com"
-											},
-											"role": "OWNER"
-										},
-										{
-											"user": {
-												"name": "Other User Name",
-												"email": "other.user.name@example.com"
-											},
-											"role": "MEMBER"
-										}
-									]
-								},
-								{
-									"slug": "team2",
-									"members": [
-										{
-											"user": {
-												"name": "User Name",
-												"email": "user.name@example.com"
-											},
-											"role": "MEMBER"
-										},
-										{
-											"user": {
-												"name": "Other User Name",
-												"email": "other.user.name@example.com"
-											},
-											"role": "OWNER"
-										},
-										{
-											"user": {
-												"name": "Third User Name",
-												"email": "third.user.name@example.com"
-											},
-											"role": "MEMBER"
-										}
-									]
-								}
-							],
-                            "pageInfo": {
-                                 "totalCount": 0,
-                                 "hasNextPage": false,
-                                 "hasPreviousPage": false
+                            "teams": {
+							  "nodes": [
+							  	{
+							  		"slug": "team1",
+							  		"members": {
+                                         "nodes": [
+							  			  {
+							  			  	"user": {
+							  			  		"name": "User Name",
+							  			  		"email": "user.name@example.com"
+							  			  	},
+							  			  	"role": "OWNER"
+							  			  },
+							  			  {
+							  			  	"user": {
+							  			  		"name": "Other User Name",
+							  			  		"email": "other.user.name@example.com"
+							  			  	},
+							  			  	"role": "MEMBER"
+							  			  }
+							  		    ]
+                                     }
+							  	},
+							  	{
+							  		"slug": "team2",
+							  		"members": { 
+                                          "nodes": [
+							  			  {
+							  			  	"user": {
+							  			  		"name": "User Name",
+							  			  		"email": "user.name@example.com"
+							  			  	},
+							  			  	"role": "MEMBER"
+							  			  },
+							  			  {
+							  			  	"user": {
+							  			  		"name": "Other User Name",
+							  			  		"email": "other.user.name@example.com"
+							  			  	},
+							  			  	"role": "OWNER"
+							  			  },
+							  			  {
+							  			  	"user": {
+							  			  		"name": "Third User Name",
+							  			  		"email": "third.user.name@example.com"
+							  			  	},
+							  			  	"role": "MEMBER"
+							  			  }
+							  		    ]    
+                                     }
+							  	}
+							  ],
+                              "pageInfo": {
+                                   "totalCount": 0,
+                                   "hasNextPage": false,
+                                   "hasPreviousPage": false
+                              }
                             }
 						}
 					}
@@ -131,8 +137,8 @@ func TestGetTeams(t *testing.T) {
 		assert.Equal(t, "team1", naisTeams[0].Slug)
 		assert.Equal(t, "team2", naisTeams[1].Slug)
 
-		assert.Len(t, naisTeams[0].Members, 2)
-		assert.Len(t, naisTeams[1].Members, 3)
+		assert.Len(t, naisTeams[0].Members.Members, 2)
+		assert.Len(t, naisTeams[1].Members.Members, 3)
 	})
 
 	t.Run("team slugs filter is not empty", func(t *testing.T) {
@@ -141,29 +147,31 @@ func TestGetTeams(t *testing.T) {
 				w.Write([]byte(`
 					{
 						"data": {
-							"nodes": [
-								{
-									"slug": "team1",
-									"members": []
-								},
-								{
-									"slug": "team2",
-									"members": []
-								},
-								{
-									"slug": "team3",
-									"members": []
-								},
-								{
-									"slug": "team4",
-									"members": []
-								}
-							],
-                            "pageInfo": {
-                                 "totalCount": 0,
-                                 "hasNextPage": false,
-                                 "hasPreviousPage": false
-                            }	
+                            "teams": {
+							  "nodes": [
+							  	{
+							  		"slug": "team1",
+							  		"members": {}
+							  	},
+							  	{
+							  		"slug": "team2",
+							  		"members": {}
+							  	},
+							  	{
+							  		"slug": "team3",
+							  		"members": {}
+							  	},
+							  	{
+							  		"slug": "team4",
+							  		"members": {}
+							  	}
+							  ],
+                              "pageInfo": {
+                                   "totalCount": 0,
+                                   "hasNextPage": false,
+                                   "hasPreviousPage": false
+                              }
+                            }
 						}
 					}
 				`))
