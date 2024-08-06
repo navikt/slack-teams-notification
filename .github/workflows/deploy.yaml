@@ -10,7 +10,7 @@ jobs:
     permissions:
       contents: read
       id-token: write
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     outputs:
       version: ${{ steps.build_push_sign.outputs.version }}
     env:
@@ -19,11 +19,11 @@ jobs:
       BASEIMG_IDENTITY: "https://github.com/chainguard-images/images/.github/workflows/release.yaml@refs/heads/main"
       BASEIMG_ISSUER: "https://token.actions.githubusercontent.com"
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: nais/docker-build-push@v0
         id: docker-push
         with:
-          team: aura
+          team: nais
           project_id: ${{ vars.NAIS_MANAGEMENT_PROJECT_ID }}
           identity_provider: ${{ secrets.NAIS_WORKLOAD_IDENTITY_PROVIDER }}
       - uses: nais/deploy/actions/deploy@v2
