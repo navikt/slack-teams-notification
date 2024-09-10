@@ -70,7 +70,7 @@ func (n *Notifier) notifyTeam(ctx context.Context, team teams.Team) error {
 		time.Sleep(time.Second)
 		_, _, err := n.slackAPI.PostMessageContext(ctx, recipient, msgOptions...)
 		if err != nil {
-			logger.Errorf("posting message to %s: %v", recipient, err)
+			logger.Errorf("unable to post message to %s: %v", recipient, err)
 		} else {
 			logger.Infof("'%s' notified", team.Slug)
 		}
@@ -85,6 +85,9 @@ func ownersOf(team teams.Team) []teams.User {
 		if member.IsOwner() {
 			owners = append(owners, member.User)
 		}
+	}
+	if len(owners) == 0 {
+		logrus.Infof("couldn't decide who owns team '%s'", team.Slug)
 	}
 
 	return owners

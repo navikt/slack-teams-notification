@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"github.com/sirupsen/logrus"
 	"io"
 	"net/http"
 	"strings"
@@ -75,8 +76,10 @@ func (c *Client) GetTeams(teamSlugsFilter []string) ([]Team, error) {
 	var teams []Team
 	hasNext := true
 	teamsOffset := 0
+	pageSize := 100
 	for hasNext {
-		response, err := c.requestPage(teamsOffset, 100)
+		logrus.Infof("fetching teams from offset %d to %d", teamsOffset, teamsOffset+pageSize)
+		response, err := c.requestPage(teamsOffset, pageSize)
 		if err != nil {
 			return nil, fmt.Errorf("performing request: %w", err)
 		}
