@@ -85,7 +85,7 @@ func (c *Client) GetTeams(teamSlugsFilter []string) ([]Team, error) {
 			return nil, fmt.Errorf("performing request: %w", err)
 		}
 		teams = append(teams, response.Data.Teams.Teams...)
-		teamsOffset += response.Data.Teams.PageInfo.TotalCount
+		teamsOffset += len(teams)
 		hasNext = response.Data.Teams.PageInfo.HasNext
 	}
 
