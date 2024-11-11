@@ -19,8 +19,8 @@ func header(format string, args ...any) *slackapi.HeaderBlock {
 func getNotificationMessageOptions(team teams.Team, frontendURL string) []slackapi.MsgOption {
 	blocks := []slackapi.Block{
 		mrkdwn("👋 Hei %s!", team.Slug),
-		mrkdwn("Dere er ansvarlige for å teametmedlemsliste oppdatert. Fordi medlemsskap i NAIS teams gir utvidede rettigheter til blant annet produksjonsmiljø og persondata er det viktig å holde teamene oppdatert."),
-		mrkdwn("Følgende brukere ligger i dag inne som medlemmer og eiere i `%s`:", team.Slug),
+		mrkdwn("Dere er ansvarlige for å holde teamets medlemsliste oppdatert. Siden medlemskap i NAIS-team gir utvidede rettigheter til blant annet produksjonsmiljø og persondata, er det viktig å holde teamet oppdatert."),
+		mrkdwn("Følgende brukere er i dag registrert som medlemmer og eiere i `%s`:", team.Slug),
 	}
 
 	memberNames := make([]string, 0)
