@@ -10,7 +10,7 @@ spec:
   schedule: "0 10 11 * *"
   env:
     - name: NAIS_API_ENDPOINT
-      value: https://console.nav.cloud.nais.io/query
+      value: https://console.nav.cloud.nais.io/graphql
     - name: CONSOLE_URL
       value: https://console.nav.cloud.nais.io/
   envFrom:
