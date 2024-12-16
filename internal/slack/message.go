@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/nais/slack-teams-notification/pkg/teams"
+	"github.com/nais/slack-teams-notification/internal/teams"
 	slackapi "github.com/slack-go/slack"
 )
 

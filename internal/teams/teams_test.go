@@ -5,7 +5,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/nais/slack-teams-notification/pkg/teams"
+	"github.com/nais/slack-teams-notification/internal/teams"
 	"github.com/stretchr/testify/assert"
 )
 

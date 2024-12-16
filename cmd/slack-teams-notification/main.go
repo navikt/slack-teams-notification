@@ -6,9 +6,9 @@ import (
 	"os"
 	"time"
 
-	"github.com/nais/slack-teams-notification/pkg/config"
-	"github.com/nais/slack-teams-notification/pkg/slack"
-	"github.com/nais/slack-teams-notification/pkg/teams"
+	"github.com/nais/slack-teams-notification/internal/config"
+	"github.com/nais/slack-teams-notification/internal/slack"
+	"github.com/nais/slack-teams-notification/internal/teams"
 	"github.com/sirupsen/logrus"
 )
 

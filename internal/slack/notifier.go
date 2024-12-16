@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/nais/slack-teams-notification/pkg/teams"
+	"github.com/nais/slack-teams-notification/internal/teams"
 	"github.com/sirupsen/logrus"
 	slackapi "github.com/slack-go/slack"
 )
