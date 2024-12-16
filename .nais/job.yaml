@@ -9,9 +9,9 @@ spec:
   image: "{{ IMAGE }}"
   schedule: "0 10 11 * *"
   env:
-    - name: NAIS_API_URL
+    - name: NAIS_API_ENDPOINT
       value: https://console.nav.cloud.nais.io/query
-    - name: CONSOLE_FRONTEND_URL
+    - name: CONSOLE_URL
       value: https://console.nav.cloud.nais.io/
   envFrom:
     - secret: slack-teams-notification
@@ -20,14 +20,3 @@ spec:
       external:
         - host: console.nav.cloud.nais.io
         - host: slack.com
----
-apiVersion: v1
-kind: Secret
-metadata:
-  labels:
-    team: nais
-  name: slack-teams-notification
-  namespace: nais
-stringData:
-  SLACK_API_TOKEN: "{{ SLACK_API_TOKEN }}"
-  NAIS_API_TOKEN: "{{ NAIS_API_TOKEN }}"

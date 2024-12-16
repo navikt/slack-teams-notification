@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/nais/slack-teams-notification/internal/teams"
+	"github.com/nais/slack-teams-notification/internal/naisapi"
 	slackapi "github.com/slack-go/slack"
 )
 
@@ -16,7 +16,7 @@ func header(format string, args ...any) *slackapi.HeaderBlock {
 	return slackapi.NewHeaderBlock(slackapi.NewTextBlockObject("plain_text", fmt.Sprintf(format, args...), false, false))
 }
 
-func getNotificationMessageOptions(team teams.Team, frontendURL string) []slackapi.MsgOption {
+func getNotificationMessageOptions(team naisapi.Team, frontendURL string) []slackapi.MsgOption {
 	blocks := []slackapi.Block{
 		mrkdwn("👋 Hei %s!", team.Slug),
 		mrkdwn("Dere er ansvarlige for å holde teamets medlemsliste oppdatert. Siden medlemskap i NAIS-team gir utvidede rettigheter til blant annet produksjonsmiljø og persondata, er det viktig å holde teamet oppdatert."),
@@ -25,8 +25,8 @@ func getNotificationMessageOptions(team teams.Team, frontendURL string) []slacka
 
 	memberNames := make([]string, 0)
 	ownerNames := make([]string, 0)
-	for _, member := range team.Members.Members {
-		name := member.User.Name
+	for _, member := range team.Members {
+		name := member.Name
 		if member.IsOwner() {
 			ownerNames = append(ownerNames, "- "+name)
 		}

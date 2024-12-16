@@ -6,7 +6,7 @@ fmt:
 	go run mvdan.cc/gofumpt@latest -w ./
 
 test:
-	go test -v ./...
+	go test --race -v ./...
 
 check: staticcheck vulncheck deadcode
 

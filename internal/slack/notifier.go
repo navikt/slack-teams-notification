@@ -4,60 +4,44 @@ import (
 	"context"
 	"time"
 
-	"github.com/nais/slack-teams-notification/internal/teams"
+	"github.com/nais/slack-teams-notification/internal/naisapi"
 	"github.com/sirupsen/logrus"
 	slackapi "github.com/slack-go/slack"
 )
 
 type Notifier struct {
-	teamsFrontendURL string
-	slackAPI         *slackapi.Client
-	logger           *logrus.Entry
-	sleepDuration    time.Duration
+	consoleFrontendURL string
+	slackApi           *slackapi.Client
+	log                logrus.FieldLogger
 }
-
-type Option func(*Notifier)
 
 // NewNotifier Create a new Slack notifier instance
-func NewNotifier(slackApiToken, teamsFrontendURL string, options ...Option) *Notifier {
-	notifier := &Notifier{
-		logger:           logrus.New().WithField("component", "slack-notifier"),
-		teamsFrontendURL: teamsFrontendURL,
-		slackAPI:         slackapi.New(slackApiToken),
-		sleepDuration:    time.Second * 1, // Slack has rather strict rate limits, sleep duration between notifications
-	}
-
-	for _, opt := range options {
-		opt(notifier)
-	}
-
-	return notifier
-}
-
-// OptionLogger Set a custom logger
-func OptionLogger(logger *logrus.Entry) func(*Notifier) {
-	return func(n *Notifier) {
-		n.logger = logger
+func NewNotifier(slackApiToken, consoleFrontendURL string, log logrus.FieldLogger) *Notifier {
+	return &Notifier{
+		log:                log,
+		consoleFrontendURL: consoleFrontendURL,
+		slackApi:           slackapi.New(slackApiToken),
 	}
 }
 
 // NotifyTeams Notify all teams on Slack that they need to keep their teams up to date
-func (n *Notifier) NotifyTeams(ctx context.Context, teams []teams.Team) {
+func (n *Notifier) NotifyTeams(ctx context.Context, teams []naisapi.Team) {
 	for _, team := range teams {
-		err := n.notifyTeam(ctx, team)
-		if err != nil {
-			n.logger.Errorf("posting msg to channel '%s': %v", team.SlackChannel, err)
+		if err := n.notifyTeam(ctx, team); err != nil {
+			n.log.
+				WithError(err).
+				WithField("slack_channel", team.SlackChannel).
+				Errorf("posting message to Slack")
 		}
 	}
 }
 
-func (n *Notifier) notifyTeam(ctx context.Context, team teams.Team) error {
-	logger := n.logger.WithField("team_slug", team.Slug)
-	msgOptions := getNotificationMessageOptions(team, n.teamsFrontendURL)
+func (n *Notifier) notifyTeam(ctx context.Context, team naisapi.Team) error {
+	msgOptions := getNotificationMessageOptions(team, n.consoleFrontendURL)
 	var recipients []string
-	owners := ownersOf(team)
+	owners := n.ownersOf(team)
 	for _, member := range owners {
-		slackUser, err := n.slackAPI.GetUserByEmailContext(ctx, member.Email)
+		slackUser, err := n.slackApi.GetUserByEmailContext(ctx, member.Email)
 		if err != nil {
 			return err
 		}
@@ -67,27 +51,32 @@ func (n *Notifier) notifyTeam(ctx context.Context, team teams.Team) error {
 		recipients = append(recipients, team.SlackChannel)
 	}
 	for _, recipient := range recipients {
-		time.Sleep(time.Second)
-		_, _, err := n.slackAPI.PostMessageContext(ctx, recipient, msgOptions...)
+		log := n.log.WithFields(logrus.Fields{
+			"team_slug":    team.Slug,
+			"recipient_id": recipient,
+		})
+		_, _, err := n.slackApi.PostMessageContext(ctx, recipient, msgOptions...)
 		if err != nil {
-			logger.Errorf("unable to post message to %s: %v", recipient, err)
+			log.WithError(err).Errorf("post message to Slack")
 		} else {
-			logger.Infof("'%s' notified", team.Slug)
+			log.Infof("notification sent")
 		}
+
+		time.Sleep(time.Second) // Sleep due to strict rate limiting
 	}
 
 	return nil
 }
 
-func ownersOf(team teams.Team) []teams.User {
-	owners := make([]teams.User, 0)
-	for _, member := range team.Members.Members {
+func (n *Notifier) ownersOf(team naisapi.Team) []naisapi.Member {
+	owners := make([]naisapi.Member, 0)
+	for _, member := range team.Members {
 		if member.IsOwner() {
-			owners = append(owners, member.User)
+			owners = append(owners, member)
 		}
 	}
 	if len(owners) == 0 {
-		logrus.Infof("couldn't decide who owns team '%s'", team.Slug)
+		n.log.WithField("team_slug", team.Slug).Infof("unable to find team owner")
 	}
 
 	return owners
