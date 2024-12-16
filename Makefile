@@ -1,17 +1,23 @@
-all: slack-teams-notification test check fmt
+.PHONY: all fmt test check staticcheck vulncheck deadcode build
 
-slack-teams-notification:
-	go build -o bin/slack-teams-notification cmd/slack-teams-notification/main.go
-
-test:
-	go test ./...
-
-check:
-	go run honnef.co/go/tools/cmd/staticcheck@latest ./...
-	go run golang.org/x/vuln/cmd/govulncheck@latest -test ./...
+all: fmt test check build
 
 fmt:
 	go run mvdan.cc/gofumpt@latest -w ./
 
-static:
-	CGO_ENABLED=0 go build -a -installsuffix cgo -o bin/slack-teams-notification cmd/slack-teams-notification/main.go
+test:
+	go test -v ./...
+
+check: staticcheck vulncheck deadcode
+
+staticcheck:
+	go run honnef.co/go/tools/cmd/staticcheck@latest ./...
+
+vulncheck:
+	go run golang.org/x/vuln/cmd/govulncheck@latest ./...
+
+deadcode:
+	go run golang.org/x/tools/cmd/deadcode@latest -test ./...
+
+build:
+	go build -o ./bin/slack-teams-notification ./cmd/slack-teams-notification
