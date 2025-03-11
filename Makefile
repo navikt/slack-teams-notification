@@ -1,23 +1,29 @@
-.PHONY: all fmt test check staticcheck vulncheck deadcode build
-
+.PHONY: all
 all: fmt test check build
 
+.PHONY: fmt
 fmt:
-	go run mvdan.cc/gofumpt@latest -w ./
+	go tool mvdan.cc/gofumpt -w ./
 
+.PHONY: test
 test:
 	go test --race -v ./...
 
+.PHONY: check
 check: staticcheck vulncheck deadcode
 
+.PHONY: staticcheck
 staticcheck:
-	go run honnef.co/go/tools/cmd/staticcheck@latest ./...
+	go tool honnef.co/go/tools/cmd/staticcheck ./...
 
+.PHONY: vulncheck
 vulncheck:
-	go run golang.org/x/vuln/cmd/govulncheck@latest ./...
+	go tool golang.org/x/vuln/cmd/govulncheck ./...
 
+.PHONY: deadcode
 deadcode:
-	go run golang.org/x/tools/cmd/deadcode@latest -test ./...
+	go tool golang.org/x/tools/cmd/deadcode -test ./...
 
+.PHONY: build
 build:
 	go build -o ./bin/slack-teams-notification ./cmd/slack-teams-notification

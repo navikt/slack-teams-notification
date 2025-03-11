@@ -52,7 +52,7 @@ func getNotificationMessageOptions(team naisapi.Team, frontendURL string) []slac
 	blocks = append(blocks, mrkdwn("Ser dette korrekt ut? Om ikke kan du administrere teamet i <%s|Console> (krever <https://docs.nais.io/explanation/naisdevice/|naisdevice>).", getTeamsURL(frontendURL, team.Slug)))
 
 	if len(ownerNames) < 2 {
-		blocks = append(blocks, mrkdwn(fmt.Sprintf("*NB!* Antall eiere for dette teamet er %d, det *bør* være minst to eiere av hvert team.", len(ownerNames))))
+		blocks = append(blocks, mrkdwn("*NB!* Antall eiere for dette teamet er %d, det *bør* være minst to eiere av hvert team.", len(ownerNames)))
 		if len(ownerNames) == 0 {
 			blocks = append(blocks, mrkdwn("Ta kontakt med <https://nav-it.slack.com/archives/C5KUST8N6/|nais-teamet> for å få lagt inn en eier."))
 		}

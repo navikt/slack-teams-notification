@@ -6,27 +6,73 @@ on:
     paths-ignore:
       - "*.md"
 jobs:
+  test:
+    runs-on: ubuntu-latest
+    outputs:
+      go_version: ${{ steps.go_version.outputs.go_version }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup mise and install dependencies
+        uses: jdx/mise-action@v2
+
+      - name: Find go cache dir
+        id: go-cache
+        run: |
+          go version
+          # Clear cache dirs to avoid error when restoring
+          go clean -cache -modcache
+          echo "gocache=$(go env GOCACHE)" >> $GITHUB_OUTPUT
+          echo "gomodcache=$(go env GOMODCACHE)" >> $GITHUB_OUTPUT
+
+      - name: Cache go modules
+        uses: actions/cache@v4
+        with:
+          path: |
+            ${{ steps.go-cache.outputs.gocache }}
+            ${{ steps.go-cache.outputs.gomodcache }}
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+
+      - name: Run tests
+        run: make test
+
+      - name: Run static analysis tools
+        run: make check
+
+      - name: Find go version
+        id: go_version
+        run: echo "go_version=$(mise current go)" >> $GITHUB_OUTPUT
+
+      - name: Check code format
+        run: |
+          make fmt
+          git diff --exit-code --name-only
+
   build_and_push:
+    needs:
+      - test
     permissions:
       contents: read
       id-token: write
     runs-on: ubuntu-latest
     outputs:
       version: ${{ steps.build_push_sign.outputs.version }}
-    env:
-      BUILDER_IMG: "cgr.dev/chainguard/go"
-      RUNNER_IMG: "cgr.dev/chainguard/static"
-      BASEIMG_IDENTITY: "https://github.com/chainguard-images/images/.github/workflows/release.yaml@refs/heads/main"
-      BASEIMG_ISSUER: "https://token.actions.githubusercontent.com"
     steps:
-      - uses: actions/checkout@v4
-      - uses: nais/docker-build-push@v0
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Build and push Docker image
+        uses: nais/docker-build-push@v0
         id: docker-push
         with:
           team: nais
+          build_args: GO_VERSION=${{ needs.test.outputs.go_version }}
           project_id: ${{ vars.NAIS_MANAGEMENT_PROJECT_ID }}
           identity_provider: ${{ secrets.NAIS_WORKLOAD_IDENTITY_PROVIDER }}
-      - uses: nais/deploy/actions/deploy@v2
+
+      - name: Deploy to prod
+        uses: nais/deploy/actions/deploy@v2
         env:
           CLUSTER: prod-gcp
           RESOURCE: .nais/job.yaml
