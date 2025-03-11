@@ -56,7 +56,7 @@ func run(ctx context.Context, cfg *config, log logrus.FieldLogger) error {
 	}
 
 	if len(naisTeams) == 0 {
-		return fmt.Errorf("no NAIS teams returned from the API, this is most likely an error")
+		return fmt.Errorf("no Nais teams returned from the API, this is most likely an error")
 	}
 
 	slack.

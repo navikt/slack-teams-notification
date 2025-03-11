@@ -21,7 +21,7 @@ type SlackConfig struct {
 }
 
 type NaisApiConfig struct {
-	// ApiToken is the API token used with the NAIS API.
+	// ApiToken is the API token used with the Nais API.
 	ApiToken string `env:"NAIS_API_TOKEN,required"`
 
 	// Endpoint is the URL to the GraphQL API.
@@ -60,7 +60,7 @@ func validateConfig(cfg *config) error {
 	}
 
 	if cfg.NaisApi.ApiToken == "" {
-		return fmt.Errorf("missing NAIS API token")
+		return fmt.Errorf("missing Nais API token")
 	}
 
 	return nil

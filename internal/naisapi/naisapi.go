@@ -117,7 +117,7 @@ func (c *Client) GetTeams(ctx context.Context, teamSlugsFilter []string) ([]Team
 	teamsHasNextPage := true
 	resp := &PaginatedGraphQLResponse{}
 
-	c.log.Debugf("start fetching teams and members from NAIS API")
+	c.log.Debugf("start fetching teams and members from Nais API")
 	for teamsHasNextPage {
 	fetch:
 		err := func() error {
@@ -181,7 +181,7 @@ func (c *Client) GetTeams(ctx context.Context, teamSlugsFilter []string) ([]Team
 		}).Debugf("fetched page of teams")
 	}
 
-	c.log.Debugf("done fetching NAIS teams")
+	c.log.Debugf("done fetching Nais teams")
 
 	if len(teamSlugsFilter) == 0 {
 		c.log.Debugf("no filter specified, return all teams")
