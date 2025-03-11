@@ -7,6 +7,7 @@ on:
       - "*.md"
 jobs:
   test:
+    name: Run tests and static analysis
     runs-on: ubuntu-latest
     outputs:
       go_version: ${{ steps.go_version.outputs.go_version }}
@@ -50,6 +51,7 @@ jobs:
           git diff --exit-code --name-only
 
   build_and_push:
+    name: Build and push docker image
     needs:
       - test
     permissions:
