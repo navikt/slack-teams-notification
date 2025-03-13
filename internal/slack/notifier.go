@@ -27,9 +27,17 @@ func NewNotifier(slackApiToken, consoleFrontendURL string, log logrus.FieldLogge
 // NotifyTeams Notify all teams on Slack that they need to keep their teams up to date
 func (n *Notifier) NotifyTeams(ctx context.Context, teams []naisapi.Team) {
 	for _, team := range teams {
+		if len(team.Members) == 0 {
+			n.log.
+				WithField("team_slug", team.Slug).
+				Infof("no members in team, skip notification")
+			continue
+		}
+
 		if err := n.notifyTeam(ctx, team); err != nil {
 			n.log.
 				WithError(err).
+				WithField("team_slug", team.Slug).
 				WithField("slack_channel", team.SlackChannel).
 				Errorf("posting message to Slack")
 		}

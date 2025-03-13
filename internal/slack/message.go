@@ -4,16 +4,45 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/google/uuid"
 	"github.com/nais/slack-teams-notification/internal/naisapi"
 	slackapi "github.com/slack-go/slack"
 )
 
+func list(entries []string) *slackapi.RichTextBlock {
+	elements := make([]slackapi.RichTextElement, len(entries))
+	for i, entry := range entries {
+		elements[i] = slackapi.NewRichTextSection(slackapi.NewRichTextSectionTextElement(entry, nil))
+	}
+
+	return slackapi.NewRichTextBlock(
+		uuid.NewString(),
+		slackapi.NewRichTextList(slackapi.RTEListBullet, 0, elements...),
+	)
+}
+
 func mrkdwn(format string, args ...any) *slackapi.SectionBlock {
-	return slackapi.NewSectionBlock(slackapi.NewTextBlockObject("mrkdwn", fmt.Sprintf(format, args...), false, false), nil, nil)
+	return slackapi.NewSectionBlock(
+		slackapi.NewTextBlockObject(
+			slackapi.MarkdownType,
+			fmt.Sprintf(format, args...),
+			false,
+			false,
+		),
+		nil,
+		nil,
+	)
 }
 
 func header(format string, args ...any) *slackapi.HeaderBlock {
-	return slackapi.NewHeaderBlock(slackapi.NewTextBlockObject("plain_text", fmt.Sprintf(format, args...), false, false))
+	return slackapi.NewHeaderBlock(
+		slackapi.NewTextBlockObject(
+			slackapi.PlainTextType,
+			fmt.Sprintf(format, args...),
+			false,
+			false,
+		),
+	)
 }
 
 func getNotificationMessageOptions(team naisapi.Team, frontendURL string) []slackapi.MsgOption {
@@ -28,34 +57,29 @@ func getNotificationMessageOptions(team naisapi.Team, frontendURL string) []slac
 	for _, member := range team.Members {
 		name := member.Name
 		if member.IsOwner() {
-			ownerNames = append(ownerNames, "- "+name)
+			ownerNames = append(ownerNames, name)
 		}
-		memberNames = append(memberNames, "- "+name)
+		memberNames = append(memberNames, name)
 	}
 
-	if len(memberNames) > 0 {
-		blocks = append(
-			blocks,
-			header("Medlemmer"),
-			mrkdwn("%s", strings.Join(memberNames, "\n")),
-		)
-	}
+	blocks = append(blocks, header("Medlemmer"), list(memberNames))
 
 	if len(ownerNames) > 0 {
-		blocks = append(
-			blocks,
-			header("Eiere"),
-			mrkdwn("%s", strings.Join(ownerNames, "\n")),
-		)
+		blocks = append(blocks, header("Eiere"), list(ownerNames))
 	}
 
-	blocks = append(blocks, mrkdwn("Ser dette korrekt ut? Om ikke kan du administrere teamet i <%s|Console> (krever <https://docs.nais.io/explanation/naisdevice/|naisdevice>).", getTeamsURL(frontendURL, team.Slug)))
+	blocks = append(
+		blocks,
+		mrkdwn(
+			"Ser dette korrekt ut? Om ikke kan dere administrere teamet i <%s|Console>.",
+			getTeamMembersAdminURL(frontendURL, team.Slug),
+		),
+	)
 
-	if len(ownerNames) < 2 {
-		blocks = append(blocks, mrkdwn("*NB!* Antall eiere for dette teamet er %d, det *bør* være minst to eiere av hvert team.", len(ownerNames)))
-		if len(ownerNames) == 0 {
-			blocks = append(blocks, mrkdwn("Ta kontakt med <https://nav-it.slack.com/archives/C5KUST8N6/|nais-teamet> for å få lagt inn en eier."))
-		}
+	if len(ownerNames) == 0 {
+		blocks = append(blocks, mrkdwn("*NB!* Teamet har ingen eier, ta kontakt med Nais-teamet på #utviklerrommet for å få lagt inn en eier."))
+	} else if len(ownerNames) < 2 {
+		blocks = append(blocks, mrkdwn("*NB!* Det *bør* være minst to eiere av hvert team."))
 	}
 
 	return []slackapi.MsgOption{
@@ -64,7 +88,7 @@ func getNotificationMessageOptions(team naisapi.Team, frontendURL string) []slac
 	}
 }
 
-func getTeamsURL(baseURL, teamSlug string) string {
+func getTeamMembersAdminURL(baseURL, teamSlug string) string {
 	baseURL = strings.TrimSuffix(baseURL, "/")
 	return fmt.Sprintf("%s/team/%s/members", baseURL, teamSlug)
 }
