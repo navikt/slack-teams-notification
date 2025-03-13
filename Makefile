@@ -10,7 +10,7 @@ test:
 	go test --race -v ./...
 
 .PHONY: check
-check: staticcheck vulncheck deadcode
+check: staticcheck vulncheck deadcode gosec
 
 .PHONY: staticcheck
 staticcheck:
@@ -23,6 +23,10 @@ vulncheck:
 .PHONY: deadcode
 deadcode:
 	go tool golang.org/x/tools/cmd/deadcode -test ./...
+
+.PHONY: gosec
+gosec:
+	go tool github.com/securego/gosec/v2/cmd/gosec -terse ./...
 
 .PHONY: build
 build:
