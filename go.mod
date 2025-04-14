@@ -1,6 +1,6 @@
 module github.com/nais/slack-teams-notification
 
-go 1.24
+go 1.24.2
 
 tool (
 	github.com/securego/gosec/v2/cmd/gosec
