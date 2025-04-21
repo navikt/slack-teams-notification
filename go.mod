@@ -13,7 +13,7 @@ tool (
 require (
 	github.com/google/uuid v1.6.0
 	github.com/joho/godotenv v1.5.1
-	github.com/sethvargo/go-envconfig v1.1.1
+	github.com/sethvargo/go-envconfig v1.2.0
 	github.com/sirupsen/logrus v1.9.3
 	github.com/slack-go/slack v0.16.0
 )
