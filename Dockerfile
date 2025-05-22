@@ -5,8 +5,8 @@ WORKDIR /src
 COPY go.* ./
 RUN go mod download
 COPY . ./
-RUN go build -o ./bin/slack-teams-notification ./cmd/slack-teams-notification
+RUN go build -o ./notifier ./main.go
 
-FROM cgr.dev/chainguard/static
-COPY --from=builder /src/bin/slack-teams-notification /app/slack-teams-notification
-CMD ["/app/slack-teams-notification"]
+FROM gcr.io/distroless/base
+COPY --from=builder /src/notifier /app/notifier
+CMD ["/app/notifier"]

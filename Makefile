@@ -30,4 +30,4 @@ gosec:
 
 .PHONY: build
 build:
-	go build -o ./bin/slack-teams-notification ./cmd/slack-teams-notification
+	go build -o ./bin/notifier ./main.go
