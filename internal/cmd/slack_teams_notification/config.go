@@ -1,4 +1,4 @@
-package slack_teams_notification
+package slackteamsnotification
 
 import (
 	"context"
@@ -16,20 +16,20 @@ type LogConfig struct {
 }
 
 type SlackConfig struct {
-	// ApiToken is the API token used with the Slack API.
-	ApiToken string `env:"SLACK_API_TOKEN,required"`
+	// Credential is the credential used with the Slack API.
+	Credential string `env:"SLACK_API_TOKEN,required"`
 }
 
-type NaisApiConfig struct {
-	// ApiToken is the API token used with the Nais API.
-	ApiToken string `env:"NAIS_API_TOKEN,required"`
+type NaisAPIConfig struct {
+	// Credential is the credential used with the Nais API.
+	Credential string `env:"NAIS_API_TOKEN,required"`
 
 	// Endpoint is the URL to the GraphQL API.
 	Endpoint string `env:"NAIS_API_ENDPOINT,default=https://console.nav.cloud.nais.io/graphql"`
 
-	// ConsoleUrl is the URL to the root of the Console frontend. Used for links in the notification message sent to the
+	// ConsoleURL is the URL to the root of the Console frontend. Used for links in the notification message sent to the
 	// owners of the teams.
-	ConsoleUrl string `env:"CONSOLE_URL,default=https://console.nav.cloud.nais.io/"`
+	ConsoleURL string `env:"CONSOLE_URL,default=https://console.nav.cloud.nais.io/"`
 
 	// TeamsFilter is a list that can be supplied to only send a message to the teams included in the filter.
 	TeamsFilter []string `env:"TEAMS_FILTER"`
@@ -38,7 +38,7 @@ type NaisApiConfig struct {
 type config struct {
 	Log     *LogConfig
 	Slack   *SlackConfig
-	NaisApi *NaisApiConfig
+	NaisAPI *NaisAPIConfig
 }
 
 func newConfig(ctx context.Context) (*config, error) {
@@ -55,11 +55,11 @@ func newConfig(ctx context.Context) (*config, error) {
 }
 
 func validateConfig(cfg *config) error {
-	if cfg.Slack.ApiToken == "" {
+	if cfg.Slack.Credential == "" {
 		return fmt.Errorf("missing Slack API token")
 	}
 
-	if cfg.NaisApi.ApiToken == "" {
+	if cfg.NaisAPI.Credential == "" {
 		return fmt.Errorf("missing Nais API token")
 	}
 
