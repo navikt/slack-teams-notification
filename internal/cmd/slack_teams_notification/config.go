@@ -27,7 +27,7 @@ type NaisAPIConfig struct {
 	// Endpoint is the URL to the GraphQL API.
 	Endpoint string `env:"NAIS_API_ENDPOINT,default=https://console.nav.cloud.nais.io/graphql"`
 
-	// ConsoleUrl is the URL to the root of the Console frontend. Used for links in the notification message sent to the
+	// ConsoleURL is the URL to the root of the Console frontend. Used for links in the notification message sent to the
 	// owners of the teams.
 	ConsoleURL string `env:"CONSOLE_URL,default=https://console.nav.cloud.nais.io/"`
 
