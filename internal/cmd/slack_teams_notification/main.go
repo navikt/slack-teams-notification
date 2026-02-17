@@ -1,4 +1,4 @@
-package slack_teams_notification
+package slackteamsnotification
 
 import (
 	"context"
@@ -49,8 +49,8 @@ func Run(ctx context.Context) {
 
 func run(ctx context.Context, cfg *config, log logrus.FieldLogger) error {
 	naisTeams, err := naisapi.
-		NewClient(cfg.NaisApi.Endpoint, cfg.NaisApi.ApiToken, log.WithField("component", "nais-api-client")).
-		GetTeams(ctx, cfg.NaisApi.TeamsFilter)
+		NewClient(cfg.NaisAPI.Endpoint, cfg.NaisAPI.Credential, log.WithField("component", "nais-api-client")).
+		GetTeams(ctx, cfg.NaisAPI.TeamsFilter)
 	if err != nil {
 		return err
 	}
@@ -60,7 +60,7 @@ func run(ctx context.Context, cfg *config, log logrus.FieldLogger) error {
 	}
 
 	slack.
-		NewNotifier(cfg.Slack.ApiToken, cfg.NaisApi.ConsoleUrl, log.WithField("component", "slack-notifier")).
+		NewNotifier(cfg.Slack.Credential, cfg.NaisAPI.ConsoleURL, log.WithField("component", "slack-notifier")).
 		NotifyTeams(ctx, naisTeams)
 
 	return nil

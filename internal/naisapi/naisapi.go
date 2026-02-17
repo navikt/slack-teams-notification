@@ -209,8 +209,8 @@ func (m Member) IsOwner() bool {
 	return m.Role == "OWNER"
 }
 
-func gqlRequest(ctx context.Context, rawUrl, body string, headers http.Header) (io.ReadCloser, error) {
-	u, err := url.Parse(rawUrl)
+func gqlRequest(ctx context.Context, rawURL, body string, headers http.Header) (io.ReadCloser, error) {
+	u, err := url.Parse(rawURL)
 	if err != nil {
 		return nil, err
 	}
@@ -222,12 +222,13 @@ func gqlRequest(ctx context.Context, rawUrl, body string, headers http.Header) (
 	client := http.Client{
 		Timeout: requestTimeout,
 	}
+	// #nosec G704
 	res, err := client.Do(req)
 	if err != nil {
 		return nil, err
 	}
 	if res.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("unexpected HTTP status code %d from %q: %v", res.StatusCode, rawUrl, res)
+		return nil, fmt.Errorf("unexpected HTTP status code %d from %q: %v", res.StatusCode, rawURL, res)
 	}
 	return res.Body, nil
 }

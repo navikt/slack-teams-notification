@@ -1,4 +1,4 @@
-package slack_teams_notification
+package slackteamsnotification
 
 import (
 	"fmt"
