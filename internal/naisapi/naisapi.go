@@ -9,6 +9,7 @@ import (
 	"maps"
 	"net/http"
 	"net/url"
+	"os"
 	"slices"
 	"sort"
 	"strings"
@@ -70,17 +71,29 @@ type NaisTeam struct {
 }
 
 type Client struct {
-	endpoint string
-	apiToken string
-	log      logrus.FieldLogger
+	endpoint  string
+	tokenPath string
+	log       logrus.FieldLogger
 }
 
-func NewClient(endpoint, apiToken string, log logrus.FieldLogger) *Client {
+// NewClient creates a Nais API client. tokenPath points to the workload
+// identity token file injected by Nais (NAIS_SERVICE_ACCOUNT_TOKEN_PATH). The
+// token is rotated and the file updated in-place, so it is re-read before each
+// request.
+func NewClient(endpoint, tokenPath string, log logrus.FieldLogger) *Client {
 	return &Client{
-		endpoint: endpoint,
-		apiToken: apiToken,
-		log:      log,
+		endpoint:  endpoint,
+		tokenPath: tokenPath,
+		log:       log,
 	}
+}
+
+func (c *Client) readToken() (string, error) {
+	token, err := os.ReadFile(c.tokenPath)
+	if err != nil {
+		return "", fmt.Errorf("reading service account token from %q: %w", c.tokenPath, err)
+	}
+	return strings.TrimSpace(string(token)), nil
 }
 
 func (c *Client) GetTeams(ctx context.Context, teamSlugsFilter []string) ([]Team, error) {
@@ -121,6 +134,10 @@ func (c *Client) GetTeams(ctx context.Context, teamSlugsFilter []string) ([]Team
 	for teamsHasNextPage {
 	fetch:
 		err := func() error {
+			token, err := c.readToken()
+			if err != nil {
+				return err
+			}
 			responseBody, err := gqlRequest(
 				ctx,
 				c.endpoint,
@@ -128,7 +145,7 @@ func (c *Client) GetTeams(ctx context.Context, teamSlugsFilter []string) ([]Team
 				http.Header{
 					"User-Agent":    {httputils.UserAgent},
 					"Content-Type":  {"application/json"},
-					"Authorization": {"Bearer " + c.apiToken},
+					"Authorization": {"Bearer " + token},
 				},
 			)
 			if err != nil {
