@@ -4,6 +4,8 @@ import (
 	"context"
 	"net/http"
 	"net/http/httptest"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 
@@ -14,6 +16,7 @@ import (
 func TestGetTeams(t *testing.T) {
 	ctx := context.Background()
 	const apiToken = "some secret token"
+	tokenPath := writeTokenFile(t, apiToken)
 	emptyTeamSlugsFilter := make([]string, 0)
 	log, _ := logrustest.NewNullLogger()
 
@@ -31,7 +34,7 @@ func TestGetTeams(t *testing.T) {
 		})
 		defer ts.Close()
 
-		apiClient := naisapi.NewClient(ts.URL, apiToken, log)
+		apiClient := naisapi.NewClient(ts.URL, tokenPath, log)
 		teams, err := apiClient.GetTeams(ctx, emptyTeamSlugsFilter)
 
 		if err == nil {
@@ -52,7 +55,7 @@ func TestGetTeams(t *testing.T) {
 		})
 		defer ts.Close()
 
-		teamsClient := naisapi.NewClient(ts.URL, apiToken, log)
+		teamsClient := naisapi.NewClient(ts.URL, tokenPath, log)
 		naisTeams, err := teamsClient.GetTeams(ctx, emptyTeamSlugsFilter)
 		if err != nil {
 			t.Fatalf("unexpected error: %v", err)
@@ -69,7 +72,7 @@ func TestGetTeams(t *testing.T) {
 		})
 		defer ts.Close()
 
-		teamsClient := naisapi.NewClient(ts.URL, apiToken, log)
+		teamsClient := naisapi.NewClient(ts.URL, tokenPath, log)
 		naisTeams, err := teamsClient.GetTeams(ctx, emptyTeamSlugsFilter)
 		if naisTeams != nil {
 			t.Errorf("expected nil teams, got: %v", naisTeams)
@@ -159,7 +162,7 @@ func TestGetTeams(t *testing.T) {
 		})
 		defer ts.Close()
 
-		teamsClient := naisapi.NewClient(ts.URL, apiToken, log)
+		teamsClient := naisapi.NewClient(ts.URL, tokenPath, log)
 		naisTeams, err := teamsClient.GetTeams(ctx, emptyTeamSlugsFilter)
 		if err != nil {
 			t.Fatalf("unexpected error: %v", err)
@@ -248,7 +251,7 @@ func TestGetTeams(t *testing.T) {
 		})
 		defer ts.Close()
 
-		teamsClient := naisapi.NewClient(ts.URL, apiToken, log)
+		teamsClient := naisapi.NewClient(ts.URL, tokenPath, log)
 		naisTeams, err := teamsClient.GetTeams(ctx, []string{"team1", "team3", "team5"})
 		if naisTeams == nil {
 			t.Fatalf("expected teams, got nil")
@@ -278,6 +281,15 @@ func TestMember_IsOwner(t *testing.T) {
 	if owner.IsOwner() != true {
 		t.Errorf("member should be owner: %+v", owner)
 	}
+}
+
+func writeTokenFile(t *testing.T, token string) string {
+	t.Helper()
+	path := filepath.Join(t.TempDir(), "token")
+	if err := os.WriteFile(path, []byte(token), 0o600); err != nil {
+		t.Fatalf("writing token file: %v", err)
+	}
+	return path
 }
 
 func httpServerWithHandlers(t *testing.T, handlers []http.HandlerFunc) *httptest.Server {

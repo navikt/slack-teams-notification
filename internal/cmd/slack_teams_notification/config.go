@@ -21,8 +21,9 @@ type SlackConfig struct {
 }
 
 type NaisAPIConfig struct {
-	// Credential is the credential used with the Nais API.
-	Credential string `env:"NAIS_API_TOKEN,required"`
+	// TokenPath is the path to the workload identity token file used to
+	// authenticate as the service account via a workload binding.
+	TokenPath string `env:"NAIS_SERVICE_ACCOUNT_TOKEN_PATH,required"`
 
 	// Endpoint is the URL to the GraphQL API.
 	Endpoint string `env:"NAIS_API_ENDPOINT,default=https://console.nav.cloud.nais.io/graphql"`
@@ -59,8 +60,8 @@ func validateConfig(cfg *config) error {
 		return fmt.Errorf("missing Slack API token")
 	}
 
-	if cfg.NaisAPI.Credential == "" {
-		return fmt.Errorf("missing Nais API token")
+	if cfg.NaisAPI.TokenPath == "" {
+		return fmt.Errorf("missing Nais API service account token path")
 	}
 
 	return nil

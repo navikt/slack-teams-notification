@@ -49,7 +49,7 @@ func Run(ctx context.Context) {
 
 func run(ctx context.Context, cfg *config, log logrus.FieldLogger) error {
 	naisTeams, err := naisapi.
-		NewClient(cfg.NaisAPI.Endpoint, cfg.NaisAPI.Credential, log.WithField("component", "nais-api-client")).
+		NewClient(cfg.NaisAPI.Endpoint, cfg.NaisAPI.TokenPath, log.WithField("component", "nais-api-client")).
 		GetTeams(ctx, cfg.NaisAPI.TeamsFilter)
 	if err != nil {
 		return err
